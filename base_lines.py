@@ -29,185 +29,100 @@ X_train, X_test, y_train, y_test = train_test_split(
     X_scaled, y, test_size=0.2, random_state=42, stratify=y
 )
 
+# Dictionary to store F1 scores
+f1_scores_macro_backward = {}
+f1_scores_micro_backward = {}
+f1_scores_macro_forward = {}
+f1_scores_micro_forward = {}
 
-# Dictionary to store model names and their corresponding accuracy scores
-f1_scores_macro = {}
-f1_scores_micro = {}
+models = {
+    "Logistic Regression": LogisticRegression(
+        solver="liblinear", random_state=42, max_iter=1000
+    ),
+    "Decision Tree": DecisionTreeClassifier(random_state=42),
+    "Random Forest": RandomForestClassifier(random_state=42),
+    "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss"),
+    "Linear Regression": LinearRegression(),
+    "MLP": MLPClassifier(
+        hidden_layer_sizes=(10, 5),
+        activation="relu",
+        solver="adam",
+        max_iter=5000,
+        random_state=42,
+    ),
+}
 
-# # 1. Logistic Regression: A simple linear model that can be used as a baseline for binary classification tasks.
+for name, model in models.items():
+    # Forward selection
+    X_selected_forward, _ = apply_feature_selection(
+        X_train, y_train, X_scaled, model, method="forward"
+    )
+    scores_forward = evaluate_with_cv_seeds_and_boxplot(
+        model=model,
+        model_name=f"{name} (Forward Selection)",
+        X=X_selected_forward,
+        y=y,
+        save_path=f"results/figures/{name.lower().replace(' ', '_')}_forward_f1_boxplot.png",
+    )
+    f1_scores_macro_forward[name] = scores_forward["macro"]
+    f1_scores_micro_forward[name] = scores_forward["micro"]
 
-# logistic_model = LogisticRegression(solver="liblinear", random_state=42, max_iter=1000)
+    # Backward selection
+    X_selected_backward, _ = apply_feature_selection(
+        X_train, y_train, X_scaled, model, method="backward"
+    )
+    scores_backward = evaluate_with_cv_seeds_and_boxplot(
+        model=model,
+        model_name=f"{name} (Backward Selection)",
+        X=X_selected_backward,
+        y=y,
+        save_path=f"results/figures/{name.lower().replace(' ', '_')}_backward_f1_boxplot.png",
+    )
+    f1_scores_macro_backward[name] = scores_backward["macro"]
+    f1_scores_micro_backward[name] = scores_backward["micro"]
 
-# # Forward selection
-# X_selected_forward, selected_indices_ = apply_feature_selection(
-#     X_train, y_train, X_scaled, logistic_model, method="forward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=logistic_model,
-#     model_name="Logistic Regression (Forward Selection)",
-#     X=X_selected_forward,
-#     y=y,
-#     save_path="results/figures/logistic_forward_f1_boxplot.png",
-# )
-
-# # Backward selection
-# X_selected_backward, selected_indices = apply_feature_selection(
-#     X_train, y_train, X_scaled, logistic_model, method="backward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=logistic_model,
-#     model_name="Logistic Regression (Backward Selection)",
-#     X=X_selected_backward,
-#     y=y,
-#     save_path="results/figures/logistic_backward_f1_boxplot.png",
-# )
-
-
-# # 2. Decision tree: A simple decision tree model that can be used as a baseline for classification tasks.
-
-# decision_tree = DecisionTreeClassifier(random_state=42)
-
-# # Forward selection
-# X_selected_forward, selected_indices_ = apply_feature_selection(
-#     X_train, y_train, X_scaled, decision_tree, method="forward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=decision_tree,
-#     model_name="Decision Tree (Forward Selection)",
-#     X=X_selected_forward,
-#     y=y,
-#     save_path="results/figures/decision_tree_forward_f1_boxplot.png",
-# )
-
-# # Backward selection
-# X_selected_backward, selected_indices = apply_feature_selection(
-#     X_train, y_train, X_scaled, decision_tree, method="backward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=decision_tree,
-#     model_name="Decision Tree (Backward Selection)",
-#     X=X_selected_backward,
-#     y=y,
-#     save_path="results/figures/decision_tree_backward_f1_boxplot.png",
-# )
+# Plotting helper
 
 
-# 3. Random Forest Classifier: A more complex ensemble model that can be used as a baseline for classification tasks.
+def plot_f1_scores(score_dict, title, filename, color):
+    plt.figure(figsize=(12, 8))
+    plt.boxplot(
+        score_dict.values(),
+        vert=False,
+        patch_artist=True,
+        boxprops=dict(facecolor=color),
+        labels=score_dict.keys(),
+    )
+    plt.title(title)
+    plt.xlabel("F1 Score")
+    plt.grid(axis="x")
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    plt.show()
 
-random_forest = RandomForestClassifier(random_state=42)
 
-# Forward selection
-X_selected_forward, selected_indices_ = apply_feature_selection(
-    X_train, y_train, X_scaled, random_forest, method="forward"
+# Plot all F1 comparisons
+plot_f1_scores(
+    f1_scores_macro_forward,
+    "Macro F1 - Forward Selection",
+    "results/figures/macro_f1_forward_all.png",
+    "coral",
 )
-evaluate_with_cv_seeds_and_boxplot(
-    model=random_forest,
-    model_name="Random Forest (Forward Selection)",
-    X=X_selected_forward,
-    y=y,
-    save_path="results/figures/random_forest_forward_f1_boxplot.png",
+plot_f1_scores(
+    f1_scores_micro_forward,
+    "Micro F1 - Forward Selection",
+    "results/figures/micro_f1_forward_all.png",
+    "skyblue",
 )
-
-# Backward selection
-X_selected_backward, selected_indices = apply_feature_selection(
-    X_train, y_train, X_scaled, random_forest, method="backward"
+plot_f1_scores(
+    f1_scores_macro_backward,
+    "Macro F1 - Backward Selection",
+    "results/figures/macro_f1_backward_all.png",
+    "coral",
 )
-evaluate_with_cv_seeds_and_boxplot(
-    model=random_forest,
-    model_name="Random Forest  (Backward Selection)",
-    X=X_selected_backward,
-    y=y,
-    save_path="results/figures/random_forest_backward_f1_boxplot.png",
+plot_f1_scores(
+    f1_scores_micro_backward,
+    "Micro F1 - Backward Selection",
+    "results/figures/micro_f1_backward_all.png",
+    "skyblue",
 )
-
-# # 4. XGBoost Classifier: A powerful gradient boosting model that can be used as a baseline for classification tasks.
-
-# xgb_model = XGBClassifier(random_state=42, eval_metric="mlogloss")
-
-# # Forward selection
-# X_selected_forward, selected_indices_ = apply_feature_selection(
-#     X_train, y_train, X_scaled, xgb_model, method="forward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=xgb_model,
-#     model_name="XGBoost (Forward Selection)",
-#     X=X_selected_forward,
-#     y=y,
-#     save_path="results/figures/xgb_model_forward_f1_boxplot.png",
-# )
-
-# # Backward selection
-# X_selected_backward, selected_indices = apply_feature_selection(
-#     X_train, y_train, X_scaled, xgb_model, method="backward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=xgb_model,
-#     model_name="XGBoost  (Backward Selection)",
-#     X=X_selected_backward,
-#     y=y,
-#     save_path="results/figures/xgb_model_backward_f1_boxplot.png",
-# )
-
-
-# 5. Regression Classifier: A regression model that can be used as a baseline for regression tasks.
-
-# # Linear Regression baseline model
-# linear_model = LinearRegression()
-
-# # Forward selection
-# X_selected_forward, selected_indices_ = apply_feature_selection(
-#     X_train, y_train, X_scaled, linear_model, method="forward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=linear_model,
-#     model_name="Linear regression (Forward Selection)",
-#     X=X_selected_forward,
-#     y=y,
-#     save_path="results/figures/linear_model_forward_f1_boxplot.png",
-# )
-
-# # Backward selection
-# X_selected_backward, selected_indices = apply_feature_selection(
-#     X_train, y_train, X_scaled, linear_model, method="backward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=linear_model,
-#     model_name="Linear regression  (Backward Selection)",
-#     X=X_selected_backward,
-#     y=y,
-#     save_path="results/figures/linear_model_backward_f1_boxplot.png",
-# )
-
-# 6. MLP
-
-# mlp = MLPClassifier(
-#     hidden_layer_sizes=(10, 5),
-#     activation="relu",
-#     solver="adam",
-#     max_iter=1000,
-#     random_state=42,
-# )
-
-# # Forward selection
-# X_selected_forward, selected_indices_ = apply_feature_selection(
-#     X_train, y_train, X_scaled, mlp, method="forward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=mlp,
-#     model_name="Linear regression (Forward Selection)",
-#     X=X_selected_forward,
-#     y=y,
-#     save_path="results/figures/mlp_forward_f1_boxplot.png",
-# )
-
-# # Backward selection
-# X_selected_backward, selected_indices = apply_feature_selection(
-#     X_train, y_train, X_scaled, mlp, method="backward"
-# )
-# evaluate_with_cv_seeds_and_boxplot(
-#     model=mlp,
-#     model_name="Linear regression  (Backward Selection)",
-#     X=X_selected_backward,
-#     y=y,
-#     save_path="results/figures/mlp_backward_f1_boxplot.png",
-# )
