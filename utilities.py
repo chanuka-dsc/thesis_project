@@ -1,55 +1,53 @@
-from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import f1_score
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.feature_selection import SequentialFeatureSelector
 
 
-def evaluate_with_repeated_cv_and_boxplot(
-    model, model_name, X_train, y_train, n_splits=5, n_repeats=20, save_path=None
+def evaluate_with_cv_seeds_and_boxplot(
+    model, model_name, X, y, seeds=[42, 52, 62, 72], n_splits=5, save_path=None
 ):
     """
-    Evaluates a classification model using Repeated Stratified K-Fold CV
-    with per-fold scaling and shows boxplots of macro and micro F1 scores.
+    Evaluates a model using 5-fold Stratified CV over multiple seeds and returns F1 scores.
 
     Parameters:
-        model: scikit-learn classifier (e.g., RandomForestClassifier())
-        model_name: str, name to use for plot title and file
-        X_train: numpy array or DataFrame (unscaled features)
-        y_train: numpy array, encoded labels
+        model: scikit-learn classifier
+        model_name: str, name to display
+        X: unscaled features
+        y: encoded labels
+        seeds: list of int, random seeds for StratifiedKFold
         n_splits: int, number of folds (default=5)
-        n_repeats: int, number of repetitions (default=20)
-        save_path: str, if provided, saves boxplot to this file
+        save_path: str, optional path to save the plot
     """
-    rskf = RepeatedStratifiedKFold(
-        n_splits=n_splits, n_repeats=n_repeats, random_state=42
-    )
     f1_macro_scores = []
     f1_micro_scores = []
 
-    for train_idx, val_idx in rskf.split(X_train, y_train):
-        X_cv_train, X_cv_val = X_train[train_idx], X_train[val_idx]
-        y_cv_train, y_cv_val = y_train[train_idx], y_train[val_idx]
+    for seed in seeds:
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+        for train_idx, val_idx in skf.split(X, y):
+            X_train, X_val = X[train_idx], X[val_idx]
+            y_train, y_val = y[train_idx], y[val_idx]
 
-        # Per-fold scaling
-        scaler = StandardScaler()
-        X_cv_train_scaled = scaler.fit_transform(X_cv_train)
-        X_cv_val_scaled = scaler.transform(X_cv_val)
+            # Per-fold scaling
+            scaler = StandardScaler()
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_val_scaled = scaler.transform(X_val)
 
-        model.fit(X_cv_train_scaled, y_cv_train)
-        y_cv_pred = model.predict(X_cv_val_scaled)
+            model.fit(X_train_scaled, y_train)
+            y_pred = model.predict(X_val_scaled)
 
-        # Fix for regression-style predictions
-        if y_cv_pred.dtype.kind in {"f", "c"}:
-            y_cv_pred = np.round(y_cv_pred).astype(int)
+            if y_pred.dtype.kind in {"f", "c"}:
+                y_pred = np.round(y_pred).astype(int)
 
-        f1_macro = f1_score(y_cv_val, y_cv_pred, average="macro", zero_division=0)
-        f1_micro = f1_score(y_cv_val, y_cv_pred, average="micro", zero_division=0)
+            f1_macro = f1_score(y_val, y_pred, average="macro", zero_division=0)
+            f1_micro = f1_score(y_val, y_pred, average="micro", zero_division=0)
 
-        f1_macro_scores.append(f1_macro)
-        f1_micro_scores.append(f1_micro)
+            f1_macro_scores.append(f1_macro)
+            f1_micro_scores.append(f1_micro)
 
-    # 📊 Plot both F1 scores side-by-side
+    # 📊 Plot both F1 scores
     plt.figure(figsize=(10, 6))
     plt.boxplot(
         [f1_macro_scores, f1_micro_scores],
@@ -58,7 +56,7 @@ def evaluate_with_repeated_cv_and_boxplot(
         boxprops=dict(facecolor="coral"),
         labels=["Macro F1", "Micro F1"],
     )
-    plt.title(f"{model_name} F1 Score Distribution (5-Fold CV × 20 Repeats)")
+    plt.title(f"{model_name} F1 Score Distribution (4 Seeds × 5-Fold CV)")
     plt.xlabel("F1 Score")
     plt.grid(axis="x")
     plt.tight_layout()
@@ -67,12 +65,30 @@ def evaluate_with_repeated_cv_and_boxplot(
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.show()
 
-    # 📢 Print summary
     print(
-        f"{model_name} CV Macro F1: {np.mean(f1_macro_scores):.4f} ± {np.std(f1_macro_scores):.4f}"
+        f"{model_name} Macro F1: {np.mean(f1_macro_scores):.4f} ± {np.std(f1_macro_scores):.4f}"
     )
     print(
-        f"{model_name} CV Micro F1: {np.mean(f1_micro_scores):.4f} ± {np.std(f1_micro_scores):.4f}"
+        f"{model_name} Micro F1: {np.mean(f1_micro_scores):.4f} ± {np.std(f1_micro_scores):.4f}"
     )
 
     return {"macro": f1_macro_scores, "micro": f1_micro_scores}
+
+
+def apply_feature_selection(
+    X_train, y_train, X_scaled, model, method="forward", k="auto", scoring="f1_micro"
+):
+    direction = "forward" if method == "forward" else "backward"
+    selector = SequentialFeatureSelector(
+        model,
+        direction=direction,
+        scoring=scoring,
+        n_jobs=-1,
+        cv=5,
+        n_features_to_select=k,
+        tol=None,
+    )
+    selector.fit(X_train, y_train)
+    selected_indices = selector.get_support()
+    X_selected = X_scaled[:, selected_indices]
+    return X_selected, selected_indices

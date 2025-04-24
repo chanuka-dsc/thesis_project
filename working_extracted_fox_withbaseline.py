@@ -16,7 +16,8 @@ from result_logger_helper import evaluate_and_log
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 
-from utilities import evaluate_with_repeated_cv_and_boxplot
+from utilities import evaluate_with_cv_seeds_and_boxplot
+
 
 # Load data
 ffoxi = pd.read_csv("datasets/fox-point-feats-extracted.csv")
@@ -42,11 +43,11 @@ f1_scores_micro = {}
 
 # Logistic Regression baseline model
 logistic_model = LogisticRegression(solver='liblinear', random_state=42, max_iter=1000)
-logistic_scores = evaluate_with_repeated_cv_and_boxplot(
+logistic_scores = evaluate_with_cv_seeds_and_boxplot(
     model=logistic_model,
     model_name="Logistic regression",
-    X_train=X_scaled,
-    y_train=y,
+    X=X_scaled,
+    y=y,
     save_path="results/figures/logistic_regression_boxplot.png",
 )
 
@@ -57,11 +58,11 @@ f1_scores_micro["Logistic Regression"] = logistic_scores["micro"]
 # 2. Decision Tree Classifier: A simple decision tree model that can be used as a baseline for classification tasks.
 
 decision_tree = DecisionTreeClassifier(random_state=42)
-dt_scores = evaluate_with_repeated_cv_and_boxplot(
+dt_scores = evaluate_with_cv_seeds_and_boxplot(
     model=decision_tree,
     model_name="Decision Tree",
-    X_train=X_scaled,
-    y_train=y,
+    X=X_scaled,
+    y=y,
     save_path="results/figures/decision_boxplot.png",
 )
 
@@ -71,11 +72,11 @@ f1_scores_micro["Decision Tree"] = dt_scores["micro"]
 # 3. Random Forest Classifier: A more complex ensemble model that can be used as a baseline for classification tasks.
 # without scaling
 random_forest = RandomForestClassifier(random_state=42)
-random_forest_scores = evaluate_with_repeated_cv_and_boxplot(
+random_forest_scores = evaluate_with_cv_seeds_and_boxplot(
     model=random_forest,
     model_name="Random Forest",
-    X_train=X_scaled,
-    y_train=y,
+    X=X_scaled,
+    y=y,
     save_path="results/figures/random_forest_boxplot.png",
 )
 
@@ -85,11 +86,11 @@ f1_scores_micro["Random Forest"] = random_forest_scores["micro"]
 # 4. XGBoost Classifier: A powerful gradient boosting model that can be used as a baseline for classification tasks.
 # without scaling
 xgb_model = XGBClassifier(random_state=42, eval_metric='mlogloss')
-xgb_model_scores = evaluate_with_repeated_cv_and_boxplot(
+xgb_model_scores = evaluate_with_cv_seeds_and_boxplot(
     model=xgb_model,
     model_name="XGBoost",
-    X_train=X_scaled,
-    y_train=y,
+    X=X_scaled,
+    y=y,
     save_path="results/figures/xg_boxplot.png",
 )
 
@@ -100,11 +101,11 @@ f1_scores_micro["XGBoost"] = xgb_model_scores["micro"]
 
 # Linear Regression baseline model (scaled)
 linear_model = LinearRegression()
-linear_model_scores = evaluate_with_repeated_cv_and_boxplot(
+linear_model_scores = evaluate_with_cv_seeds_and_boxplot(
     model=linear_model,
     model_name="Linear_model",
-    X_train=X_scaled,
-    y_train=y,
+    X=X_scaled,
+    y=y,
     save_path="results/figures/linear_model_boxplot.png",
 )
 
@@ -121,11 +122,11 @@ mlp = MLPClassifier(
     random_state=42,
 )
 
-mlp_scores = evaluate_with_repeated_cv_and_boxplot(
+mlp_scores = evaluate_with_cv_seeds_and_boxplot(
     model=mlp,
     model_name="MLP",
-    X_train=X_scaled,
-    y_train=y,
+    X=X_scaled,
+    y=y,
     save_path="results/figures/mlp_boxplot.png",
 )
 
@@ -203,18 +204,18 @@ plt.show()
 # plt.show()
 
 # Log results in CSV
-evaluate_and_log(
-    model=LogisticRegression(solver='liblinear', random_state=42),
-    model_name="Logistic Regression",
-    X_train=X_train,
-    X_test=X_test_scaled,
-    y_train=y_train,
-    y_test=y_test,
-    csv_path="/results/csv/baseline_fox_logistic_regression.csv",
-    description="Logistic Regression (Scaled)",
-    feature_vector=X.columns.tolist(),  # This is essential for row-wise
-    technique="None"
-)
+# evaluate_and_log(
+#     model=LogisticRegression(solver='liblinear', random_state=42),
+#     model_name="Logistic Regression",
+#     X_train=X_train,
+#     X_test=X_test_scaled,
+#     y_train=y_train,
+#     y_test=y_test,
+#     csv_path="/results/csv/baseline_fox_logistic_regression.csv",
+#     description="Logistic Regression (Scaled)",
+#     feature_vector=X.columns.tolist(),  # This is essential for row-wise
+#     technique="None"
+# )
 
 # evaluate_and_log(
 #     model=LogisticRegression(solver='liblinear', random_state=42),
