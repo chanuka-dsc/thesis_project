@@ -14,6 +14,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score, f1_score
 from result_logger_helper import evaluate_and_log
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+
+from utilities import evaluate_with_repeated_cv_and_boxplot
 
 # Load data
 ffoxi = pd.read_csv("datasets/fox-point-feats-extracted.csv")
@@ -28,84 +31,146 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # Scale data
 scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+X_scaled = scaler.fit_transform(X)
+
 
 # Dictionary to store model names and their corresponding accuracy scores
-accuracies = {}
+f1_scores_macro = {}
+f1_scores_micro = {}
 
 # 1. Logistic Regression: A simple linear model that can be used as a baseline for binary classification tasks.
 
 # Logistic Regression baseline model
 logistic_model = LogisticRegression(solver='liblinear', random_state=42, max_iter=1000)
-logistic_model.fit(X_train_scaled, y_train)
-y_pred_logistic = logistic_model.predict(X_test_scaled)
-accuracies["Logistic Regression (Scaled)"] = accuracy_score(y_test, logistic_model.predict(X_test_scaled))
+logistic_scores = evaluate_with_repeated_cv_and_boxplot(
+    model=logistic_model,
+    model_name="Logistic regression",
+    X_train=X_scaled,
+    y_train=y,
+    save_path="results/figures/logistic_regression_boxplot.png",
+)
 
-# Evaluate Baseline Performance
-print("🔹 Baseline (Logistic Regression) Classification Report:")
-print(classification_report(y_test, y_pred_logistic))
+f1_scores_macro["Logistic Regression"] = logistic_scores["macro"]
+f1_scores_micro["Logistic Regression"] = logistic_scores["micro"]
+
 
 # 2. Decision Tree Classifier: A simple decision tree model that can be used as a baseline for classification tasks.
 
 decision_tree = DecisionTreeClassifier(random_state=42)
-decision_tree.fit(X_train_scaled, y_train)
-y_pred_tree = decision_tree.predict(X_test_scaled)
-accuracies["Decision Tree"] = accuracy_score(
-    y_test, decision_tree.predict(X_test_scaled)
+dt_scores = evaluate_with_repeated_cv_and_boxplot(
+    model=decision_tree,
+    model_name="Decision Tree",
+    X_train=X_scaled,
+    y_train=y,
+    save_path="results/figures/decision_boxplot.png",
 )
 
-# Evaluate Baseline Performance
-print("🔹 Baseline (Decision Tree) Classification Report:")
-print(classification_report(y_test, y_pred_tree))
+f1_scores_macro["Decision Tree"] = dt_scores["macro"]
+f1_scores_micro["Decision Tree"] = dt_scores["micro"]
 
 # 3. Random Forest Classifier: A more complex ensemble model that can be used as a baseline for classification tasks.
 # without scaling
 random_forest = RandomForestClassifier(random_state=42)
-random_forest.fit(X_train_scaled, y_train)
-y_pred_forest = random_forest.predict(X_test_scaled)
-accuracies["Random Forest"] = accuracy_score(
-    y_test, random_forest.predict(X_test_scaled)
+random_forest_scores = evaluate_with_repeated_cv_and_boxplot(
+    model=random_forest,
+    model_name="Random Forest",
+    X_train=X_scaled,
+    y_train=y,
+    save_path="results/figures/random_forest_boxplot.png",
 )
 
-# Evaluate Baseline Performance
-print("🔹 Baseline (Random Forest) Classification Report:")
-print(classification_report(y_test, y_pred_forest))
-
+f1_scores_macro["Random Forest"] = random_forest_scores["macro"]
+f1_scores_micro["Random Forest"] = random_forest_scores["micro"]
 
 # 4. XGBoost Classifier: A powerful gradient boosting model that can be used as a baseline for classification tasks.
 # without scaling
 xgb_model = XGBClassifier(random_state=42, eval_metric='mlogloss')
-xgb_model.fit(X_train_scaled, y_train)
-y_pred_xgb = xgb_model.predict(X_test_scaled)
-accuracies["XGBoost"] = accuracy_score(y_test, xgb_model.predict(X_test_scaled))
-# Evaluate Baseline Performance
-print("🔹 Baseline (XGBoost) Classification Report:")
-print(classification_report(y_test, y_pred_xgb))
+xgb_model_scores = evaluate_with_repeated_cv_and_boxplot(
+    model=xgb_model,
+    model_name="XGBoost",
+    X_train=X_scaled,
+    y_train=y,
+    save_path="results/figures/xg_boxplot.png",
+)
 
+f1_scores_macro["XGBoost"] = xgb_model_scores["macro"]
+f1_scores_micro["XGBoost"] = xgb_model_scores["micro"]
 
 # 5. Regression Classifier: A regression model that can be used as a baseline for regression tasks.
 
-
 # Linear Regression baseline model (scaled)
 linear_model = LinearRegression()
-linear_model.fit(X_train_scaled, y_train)
-y_pred_linear = linear_model.predict(X_test_scaled)
-y_pred_linear_class = np.round(y_pred_linear).astype(int)
-accuracies["Linear Regression (Scaled)"] = accuracy_score(y_test, y_pred_linear_class)
+linear_model_scores = evaluate_with_repeated_cv_and_boxplot(
+    model=linear_model,
+    model_name="Linear_model",
+    X_train=X_scaled,
+    y_train=y,
+    save_path="results/figures/linear_model_boxplot.png",
+)
 
-print("🔹 Baseline (Linear Regression Scaled) Classification Report:")
-print(classification_report(y_test, y_pred_linear_class, zero_division=0))
+f1_scores_macro["Linear_model"] = linear_model_scores["macro"]
+f1_scores_micro["Linear_model"] = linear_model_scores["micro"]
+
+# 6. MLP
+# Initialize MLPClassifier
+mlp = MLPClassifier(
+    hidden_layer_sizes=(10, 5),
+    activation="relu",
+    solver="adam",
+    max_iter=1000,
+    random_state=42,
+)
+
+mlp_scores = evaluate_with_repeated_cv_and_boxplot(
+    model=mlp,
+    model_name="MLP",
+    X_train=X_scaled,
+    y_train=y,
+    save_path="results/figures/mlp_boxplot.png",
+)
+
+f1_scores_macro["MLP"] = mlp_scores["macro"]
+f1_scores_micro["MLP"] = mlp_scores["micro"]
+
 
 # Plot all the accuracy scores for the models
-plt.figure(figsize=(18, 10))
-plt.title("Baseline Model Accuracy Comparison")
-plt.barh(list(accuracies.keys()), list(accuracies.values()), color='coral')
-plt.xlabel("Accuracy Score")
-plt.xlim(0, 1)
-plt.grid(axis='x')
+
+# Macro
+plt.figure(figsize=(12, 8))
+plt.boxplot(
+    f1_scores_macro.values(),
+    vert=False,
+    patch_artist=True,
+    boxprops=dict(facecolor="coral"),
+    labels=f1_scores_macro.keys(),
+)
+plt.title("Macro F1 Score Comparison (5-Fold CV × 20 Repeats)")
+plt.xlabel("F1 Score (macro)")
+plt.grid(axis="x")
 plt.tight_layout()
-plt.savefig("results/figures/fox_baseline_comparison.png", dpi=300, bbox_inches='tight')
+plt.savefig(
+    "results/figures/all_models_macro_f1_boxplot.png", dpi=300, bbox_inches="tight"
+)
+plt.show()
+
+
+# Micro
+
+plt.figure(figsize=(12, 8))
+plt.boxplot(
+    f1_scores_micro.values(),
+    vert=False,
+    patch_artist=True,
+    boxprops=dict(facecolor="skyblue"),
+    labels=f1_scores_micro.keys(),
+)
+plt.title("Micro F1 Score Comparison (5-Fold CV × 20 Repeats)")
+plt.xlabel("F1 Score (micro)")
+plt.grid(axis="x")
+plt.tight_layout()
+plt.savefig(
+    "results/figures/all_models_micro_f1_boxplot.png", dpi=300, bbox_inches="tight"
+)
 plt.show()
 
 # # F1 score dictionary
@@ -141,7 +206,7 @@ plt.show()
 evaluate_and_log(
     model=LogisticRegression(solver='liblinear', random_state=42),
     model_name="Logistic Regression",
-    X_train=X_train_scaled,
+    X_train=X_train,
     X_test=X_test_scaled,
     y_train=y_train,
     y_test=y_test,
