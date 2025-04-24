@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from log_results_in_csv import log_result  
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("C:/Users/dhruv/Desktop/Thesis work/Datasets/trajectory-feats/amended/fox-point-feats-extracted.csv")
+df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
 
 # Separate features and label
 X = df.drop(columns=['tid', 'label'], errors='ignore')
@@ -123,13 +123,17 @@ for container in bars.containers:
                 f"{width:.2f}", va='center', fontsize=9)
 
 plt.tight_layout()
-plt.savefig("C:/Users/dhruv/Desktop/Thesis work/plots/fox_feature_selection_comparison.png", dpi=300, bbox_inches='tight')
+plt.savefig(
+    "results/figures/fox_feature_selection_comparison.png",
+    dpi=300,
+    bbox_inches="tight",
+)
 plt.show()
 
 
 # === Log Results to CSV ===
 log_result(
-    csv_path="C:/Users/dhruv/Desktop/Thesis work/results/fox_feature_selection_log_forwardxgboost.csv",
+    csv_path="results/csv/fox_feature_selection_log_forwardxgboost.csv",
     seed=42,
     model_name="Logistic Regression",
     description="Forward Selection",
@@ -140,12 +144,12 @@ log_result(
 )
 
 log_result(
-    csv_path="C:/Users/dhruv/Desktop/Thesis work/results/fox_feature_selection_log_backwardxgboost.csv",
+    csv_path="results/csv/fox_feature_selection_log_backwardxgboost.csv",
     seed=42,
     model_name="Logistic Regression",
     description="Backward Selection",
     features=backward_features,
     technique="Backward Selection",
     accuracy=results["Backward Selection"]["accuracy"],
-    f1=results["Backward Selection"]["f1_micro"]
+    f1=results["Backward Selection"]["f1_micro"],
 )
