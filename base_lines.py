@@ -12,6 +12,7 @@ from xgboost import XGBClassifier
 from log_results_in_csv import log_result
 from utilities import evaluate_with_cv_seeds_and_boxplot
 from utilities import apply_feature_selection
+from utilities import save_all_f1_scores_to_csv
 
 # === Load and Prepare Dataset ===
 df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
@@ -42,7 +43,6 @@ models = {
     "Decision Tree": DecisionTreeClassifier(random_state=42),
     "Random Forest": RandomForestClassifier(random_state=42),
     "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss"),
-    "Linear Regression": LinearRegression(),
     "MLP": MLPClassifier(
         hidden_layer_sizes=(10, 5),
         activation="relu",
@@ -71,6 +71,7 @@ for name, model in models.items():
     X_selected_backward, _ = apply_feature_selection(
         X_train, y_train, X_scaled, model, method="backward"
     )
+
     scores_backward = evaluate_with_cv_seeds_and_boxplot(
         model=model,
         model_name=f"{name} (Backward Selection)",
@@ -81,48 +82,12 @@ for name, model in models.items():
     f1_scores_macro_backward[name] = scores_backward["macro"]
     f1_scores_micro_backward[name] = scores_backward["micro"]
 
-# Plotting helper
 
-
-def plot_f1_scores(score_dict, title, filename, color):
-    plt.figure(figsize=(12, 8))
-    plt.boxplot(
-        score_dict.values(),
-        vert=False,
-        patch_artist=True,
-        boxprops=dict(facecolor=color),
-        labels=score_dict.keys(),
-    )
-    plt.title(title)
-    plt.xlabel("F1 Score")
-    plt.grid(axis="x")
-    plt.tight_layout()
-    plt.savefig(filename, dpi=300, bbox_inches="tight")
-    plt.show()
-
-
-# Plot all F1 comparisons
-plot_f1_scores(
+save_all_f1_scores_to_csv(
     f1_scores_macro_forward,
-    "Macro F1 - Forward Selection",
-    "results/figures/macro_f1_forward_all.png",
-    "coral",
-)
-plot_f1_scores(
     f1_scores_micro_forward,
-    "Micro F1 - Forward Selection",
-    "results/figures/micro_f1_forward_all.png",
-    "skyblue",
-)
-plot_f1_scores(
     f1_scores_macro_backward,
-    "Macro F1 - Backward Selection",
-    "results/figures/macro_f1_backward_all.png",
-    "coral",
-)
-plot_f1_scores(
     f1_scores_micro_backward,
-    "Micro F1 - Backward Selection",
-    "results/figures/micro_f1_backward_all.png",
-    "skyblue",
+    save_path="results/csv",
+    filename="fox_point_all_f1_scores.csv",
 )

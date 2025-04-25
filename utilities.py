@@ -1,28 +1,19 @@
+import os
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import f1_score
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.feature_selection import SequentialFeatureSelector
+import pandas as pd
 
 
 def evaluate_with_cv_seeds_and_boxplot(
     model, model_name, X, y, seeds=[42, 52, 62, 72], n_splits=5, save_path=None
 ):
-    """
-    Evaluates a model using 5-fold Stratified CV over multiple seeds and returns F1 scores.
-
-    Parameters:
-        model: scikit-learn classifier
-        model_name: str, name to display
-        X: unscaled features
-        y: encoded labels
-        seeds: list of int, random seeds for StratifiedKFold
-        n_splits: int, number of folds (default=5)
-        save_path: str, optional path to save the plot
-    """
     f1_macro_scores = []
     f1_micro_scores = []
+    f1_weighted_scores = []
 
     for seed in seeds:
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
@@ -43,27 +34,11 @@ def evaluate_with_cv_seeds_and_boxplot(
 
             f1_macro = f1_score(y_val, y_pred, average="macro", zero_division=0)
             f1_micro = f1_score(y_val, y_pred, average="micro", zero_division=0)
+            f1_weighted = f1_score(y_val, y_pred, average="weighted", zero_division=0)
 
             f1_macro_scores.append(f1_macro)
             f1_micro_scores.append(f1_micro)
-
-    # 📊 Plot both F1 scores
-    plt.figure(figsize=(10, 6))
-    plt.boxplot(
-        [f1_macro_scores, f1_micro_scores],
-        vert=False,
-        patch_artist=True,
-        boxprops=dict(facecolor="coral"),
-        labels=["Macro F1", "Micro F1"],
-    )
-    plt.title(f"{model_name} F1 Score Distribution (4 Seeds × 5-Fold CV)")
-    plt.xlabel("F1 Score")
-    plt.grid(axis="x")
-    plt.tight_layout()
-
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches="tight")
-    plt.show()
+            f1_weighted_scores.append(f1_weighted)
 
     print(
         f"{model_name} Macro F1: {np.mean(f1_macro_scores):.4f} ± {np.std(f1_macro_scores):.4f}"
@@ -71,13 +46,21 @@ def evaluate_with_cv_seeds_and_boxplot(
     print(
         f"{model_name} Micro F1: {np.mean(f1_micro_scores):.4f} ± {np.std(f1_micro_scores):.4f}"
     )
+    print(
+        f"{model_name} Weighted F1: {np.mean(f1_weighted_scores):.4f} ± {np.std(f1_weighted_scores):.4f}"
+    )
 
-    return {"macro": f1_macro_scores, "micro": f1_micro_scores}
+    return {
+        "macro": f1_macro_scores,
+        "micro": f1_micro_scores,
+        "weighted": f1_weighted_scores,
+    }
 
 
 def apply_feature_selection(
     X_train, y_train, X_scaled, model, method="forward", k="auto", scoring="f1_micro"
 ):
+
     direction = "forward" if method == "forward" else "backward"
     selector = SequentialFeatureSelector(
         model,
@@ -92,3 +75,28 @@ def apply_feature_selection(
     selected_indices = selector.get_support()
     X_selected = X_scaled[:, selected_indices]
     return X_selected, selected_indices
+
+
+def save_all_f1_scores_to_csv(
+    f1_scores_macro_forward,
+    f1_scores_micro_forward,
+    f1_scores_macro_backward,
+    f1_scores_micro_backward,
+    save_path,
+    filename="all_f1_scores.csv",
+):
+   
+    os.makedirs(save_path, exist_ok=True)
+
+
+    df_mf = pd.DataFrame(f1_scores_macro_forward).add_prefix("forward_macro_")
+    df_mi = pd.DataFrame(f1_scores_micro_forward).add_prefix("forward_micro_")
+    df_bm = pd.DataFrame(f1_scores_macro_backward).add_prefix("backward_macro_")
+    df_bi = pd.DataFrame(f1_scores_micro_backward).add_prefix("backward_micro_")
+
+
+    df_all = pd.concat([df_mf, df_mi, df_bm, df_bi], axis=1)
+
+
+    out_file = os.path.join(save_path, filename)
+    df_all.to_csv(out_file, index=False)
