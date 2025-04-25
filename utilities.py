@@ -91,21 +91,3 @@ def evaluate_with_cv_seeds_and_feature_logging(
     return results_df
 
 
-def apply_feature_selection(
-    X_train, y_train, X_scaled, model, method="forward", k="auto", scoring="f1_micro"
-):
-
-    direction = "forward" if method == "forward" else "backward"
-    selector = SequentialFeatureSelector(
-        model,
-        direction=direction,
-        scoring=scoring,
-        n_jobs=-1,
-        cv=5,
-        n_features_to_select=k,
-        tol=None,
-    )
-    selector.fit(X_train, y_train)
-    selected_indices = selector.get_support()
-    X_selected = X_scaled[:, selected_indices]
-    return X_selected, selected_indices

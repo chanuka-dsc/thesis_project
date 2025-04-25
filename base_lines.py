@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier 
 from utilities import evaluate_with_cv_seeds_and_feature_logging
-from utilities import apply_feature_selection
 
 
 # === Load and Prepare Dataset ===
@@ -22,19 +21,19 @@ y = LabelEncoder().fit_transform(df["label"])
 
 
 models = {
-    "Logistic Regression": LogisticRegression(
-        solver="liblinear", random_state=42, max_iter=1000
-    ),
-    # "Decision Tree": DecisionTreeClassifier(random_state=42),
-    # "Random Forest": RandomForestClassifier(random_state=42),
-    # "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss"),
-    # "MLP": MLPClassifier(
-    #     hidden_layer_sizes=(10, 5),
-    #     activation="relu",
-    #     solver="adam",
-    #     max_iter=5000,
-    #     random_state=42,
+    # "Logistic Regression": LogisticRegression(
+    #     solver="liblinear", random_state=42, max_iter=1000
     # ),
+    "Decision Tree": DecisionTreeClassifier(random_state=42),
+    "Random Forest": RandomForestClassifier(random_state=42),
+    "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss"),
+    "MLP": MLPClassifier(
+        hidden_layer_sizes=(10, 5),
+        activation="relu",
+        solver="adam",
+        max_iter=5000,
+        random_state=42,
+    ),
 }
 
 for name, model in models.items():
