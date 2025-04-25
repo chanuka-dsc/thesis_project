@@ -8,12 +8,10 @@ from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.metrics import accuracy_score, f1_score
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
-from xgboost import XGBClassifier
-from log_results_in_csv import log_result
-from result_logger_helper import evaluate_and_log 
-from utilities import evaluate_with_cv_seeds_and_boxplot
+from xgboost import XGBClassifier 
+from utilities import evaluate_with_cv_seeds_and_feature_logging
 from utilities import apply_feature_selection
-from utilities import save_all_f1_scores_to_csv
+
 
 # === Load and Prepare Dataset ===
 df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
@@ -31,11 +29,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     X_scaled, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# Dictionary to store F1 scores
-f1_scores_macro_backward = {}
-f1_scores_micro_backward = {}
-f1_scores_macro_forward = {}
-f1_scores_micro_forward = {}
 
 models = {
     "Logistic Regression": LogisticRegression(
@@ -58,69 +51,35 @@ for name, model in models.items():
     X_selected_forward, support_mask_forward = apply_feature_selection(
         X_train, y_train, X_scaled, model, method="forward"
     )
+
     selected_features_forward = X.columns[support_mask_forward].tolist()
 
-    scores_forward = evaluate_with_cv_seeds_and_boxplot(
+    result_forward = evaluate_with_cv_seeds_and_feature_logging(
         model=model,
-        model_name=f"{name} (Forward Selection)",
+        model_name=f"{name}",
+        desc="Forward Selection",
+        feature_names=selected_features_forward,
         X=X_selected_forward,
         y=y,
-        save_path=f"results/figures/{name.lower().replace(' ', '_')}_forward_f1_boxplot.png",
-    )
-    f1_scores_macro_forward[name] = scores_forward["macro"]
-    f1_scores_micro_forward[name] = scores_forward["micro"]
-
-    # ✅ Log results per feature (forward)
-    evaluate_and_log(
-        model=model,
-        model_name=name,
-        X_train=X_selected_forward,
-        X_test=X_selected_forward,
-        y_train=y,
-        y_test=y,
-        csv_path=f"results/csv/{name.lower().replace(' ', '_')}_forward_features.csv",
-        description=f"{name} (Forward Selection)",
-        feature_vector=selected_features_forward,
-        technique="Forward"
     )
 
     # === Backward Selection ===
     X_selected_backward, support_mask_backward = apply_feature_selection(
         X_train, y_train, X_scaled, model, method="backward"
     )
+
     selected_features_backward = X.columns[support_mask_backward].tolist()
 
-    scores_backward = evaluate_with_cv_seeds_and_boxplot(
+    results_backward = evaluate_with_cv_seeds_and_feature_logging(
         model=model,
-        model_name=f"{name} (Backward Selection)",
+        model_name=f"{name}",
+        desc="Backward Selection",
+        feature_names=selected_features_backward,
         X=X_selected_backward,
         y=y,
-        save_path=f"results/figures/{name.lower().replace(' ', '_')}_backward_f1_boxplot.png",
-    )
-    f1_scores_macro_backward[name] = scores_backward["macro"]
-    f1_scores_micro_backward[name] = scores_backward["micro"]
-
-    # ✅ Log results per feature (backward)
-    evaluate_and_log(
-        model=model,
-        model_name=name,
-        X_train=X_selected_backward,
-        X_test=X_selected_backward,
-        y_train=y,
-        y_test=y,
-        csv_path=f"results/csv/{name.lower().replace(' ', '_')}_backward_features.csv",
-        description=f"{name} (Backward Selection)",
-        feature_vector=selected_features_backward,
-        technique="Backward"
     )
 
-
-
-save_all_f1_scores_to_csv(
-    f1_scores_macro_forward,
-    f1_scores_micro_forward,
-    f1_scores_macro_backward,
-    f1_scores_micro_backward,
-    save_path="results/csv",
-    filename="fox_point_all_f1_scores.csv",
-)
+    df_all = pd.concat([result_forward, results_backward], ignore_index=True)
+    csv_path = f"results/csv/{name.lower().replace(' ', '_')}_selection_f1_scores.csv"
+    df_all.to_csv(csv_path, index=False)
+    print(f"Saved combined CSV for {name}: {csv_path}")
