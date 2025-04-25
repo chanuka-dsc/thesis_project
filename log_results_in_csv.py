@@ -25,7 +25,7 @@ import pandas as pd
 #     df.to_csv(csv_path, index=False)
 
 # Step 2: Use this cleaned CSV file before logging new results
-def log_result(csv_path, seed, model_name, description, features, technique, accuracy, f1):
+def log_result(csv_path, seed, model_name, description, features, technique, f1_macro, f1_micro):
     """
     Logs results per feature (one row per feature), ensuring:
     - Overwrites existing matching rows (based on key)
@@ -36,7 +36,7 @@ def log_result(csv_path, seed, model_name, description, features, technique, acc
 
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
 
-    expected_cols = ['seed', 'model', 'description', 'feature_name', 'technique', 'accuracy', 'f1_score']
+    expected_cols = ['seed', 'model', 'description', 'feature_name', 'technique', 'f1_macro', 'f1_micro']
     key_cols = ['seed', 'model', 'feature_name', 'technique']
 
     def clean_csv(csv_path, expected_cols):
@@ -66,16 +66,16 @@ def log_result(csv_path, seed, model_name, description, features, technique, acc
     # Step 2: Normalize key columns
     existing_df = normalize_keys(existing_df, key_cols)
 
-    # Step 3: Create new DataFrame
-    new_df = pd.DataFrame([{
-        'seed': seed,
-        'model': model_name,
-        'description': description,
-        'feature_name': feat,
-        'technique': technique,
-        'accuracy': round(accuracy, 4),
-        'f1_score': round(f1, 4)
-    } for feat in features])
+    # ✅ Step 3: Create new DataFrame (without loop)
+    new_df = pd.DataFrame({
+        'seed': [seed] * len(features),
+        'model': [model_name] * len(features),
+        'description': [description] * len(features),
+        'feature_name': features,
+        'technique': [technique] * len(features),
+        'f1_macro': [round(f1_macro, 4)] * len(features),
+        'f1_micro': [round(f1_micro, 4)] * len(features)
+    })
     new_df = normalize_keys(new_df, key_cols)
 
     # Step 4: Remove existing rows that match keys in the new data

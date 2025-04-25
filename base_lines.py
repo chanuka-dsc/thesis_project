@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 from log_results_in_csv import log_result
+from result_logger_helper import evaluate_and_log 
 from utilities import evaluate_with_cv_seeds_and_boxplot
 from utilities import apply_feature_selection
 from utilities import save_all_f1_scores_to_csv
@@ -53,10 +54,12 @@ models = {
 }
 
 for name, model in models.items():
-    # Forward selection
-    X_selected_forward, _ = apply_feature_selection(
+    # === Forward Selection ===
+    X_selected_forward, support_mask_forward = apply_feature_selection(
         X_train, y_train, X_scaled, model, method="forward"
     )
+    selected_features_forward = X.columns[support_mask_forward].tolist()
+
     scores_forward = evaluate_with_cv_seeds_and_boxplot(
         model=model,
         model_name=f"{name} (Forward Selection)",
@@ -67,10 +70,25 @@ for name, model in models.items():
     f1_scores_macro_forward[name] = scores_forward["macro"]
     f1_scores_micro_forward[name] = scores_forward["micro"]
 
-    # Backward selection
-    X_selected_backward, _ = apply_feature_selection(
+    # ✅ Log results per feature (forward)
+    evaluate_and_log(
+        model=model,
+        model_name=name,
+        X_train=X_selected_forward,
+        X_test=X_selected_forward,
+        y_train=y,
+        y_test=y,
+        csv_path=f"results/csv/{name.lower().replace(' ', '_')}_forward_features.csv",
+        description=f"{name} (Forward Selection)",
+        feature_vector=selected_features_forward,
+        technique="Forward"
+    )
+
+    # === Backward Selection ===
+    X_selected_backward, support_mask_backward = apply_feature_selection(
         X_train, y_train, X_scaled, model, method="backward"
     )
+    selected_features_backward = X.columns[support_mask_backward].tolist()
 
     scores_backward = evaluate_with_cv_seeds_and_boxplot(
         model=model,
@@ -81,6 +99,21 @@ for name, model in models.items():
     )
     f1_scores_macro_backward[name] = scores_backward["macro"]
     f1_scores_micro_backward[name] = scores_backward["micro"]
+
+    # ✅ Log results per feature (backward)
+    evaluate_and_log(
+        model=model,
+        model_name=name,
+        X_train=X_selected_backward,
+        X_test=X_selected_backward,
+        y_train=y,
+        y_test=y,
+        csv_path=f"results/csv/{name.lower().replace(' ', '_')}_backward_features.csv",
+        description=f"{name} (Backward Selection)",
+        feature_vector=selected_features_backward,
+        technique="Backward"
+    )
+
 
 
 save_all_f1_scores_to_csv(
