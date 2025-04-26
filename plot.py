@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 # Load your data
-df = pd.read_csv('results/csv/xgboost_selection_f1_scores.csv')
+df = pd.read_csv("results/csv/decision_tree_selection_f1_scores.csv")
 
 # Define metrics & techniques
 metrics    = ['f1_macro', 'f1_micro', 'f1_weighted']

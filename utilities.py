@@ -36,11 +36,12 @@ def evaluate_with_cv_seeds_and_feature_logging(
             selector = SequentialFeatureSelector(
                 model,
                 direction=desc,
-                scoring="f1_micro",
+                scoring="f1_weighted",
                 n_jobs=-1,
                 cv=5,
                 n_features_to_select="auto",
             )
+
             selector.fit(X_train, y_train)
             mask = selector.get_support()
 
@@ -92,5 +93,3 @@ def evaluate_with_cv_seeds_and_feature_logging(
 
 
 import matplotlib.pyplot as plt
-
-
