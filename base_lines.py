@@ -26,14 +26,14 @@ models = {
     # ),
     # "Decision Tree": DecisionTreeClassifier(random_state=42),
     # "Random Forest": RandomForestClassifier(random_state=42),
-    # "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss"),
-    "MLP": MLPClassifier(
-        hidden_layer_sizes=(10, 5),
-        activation="relu",
-        solver="adam",
-        max_iter=10000,
-        random_state=42,
-    ),
+    "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss"),
+    # "MLP": MLPClassifier(
+    #     hidden_layer_sizes=(10, 5),
+    #     activation="relu",
+    #     solver="adam",
+    #     max_iter=10000,
+    #     random_state=42,
+    # ),
 }
 
 for name, model in models.items():
