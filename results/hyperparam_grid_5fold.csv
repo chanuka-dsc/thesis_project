@@ -1,0 +1,5 @@
+model,best_params,cv_best_score,test_f1_score
+LogisticRegression,"{'est__C': 10.0, 'est__penalty': 'l2', 'est__solver': 'saga'}",0.5266144966144966,0.6371275783040489
+RandomForest,"{'est__max_depth': None, 'est__max_features': 'log2', 'est__n_estimators': 100}",0.5284695304695305,0.5578231292517006
+XGBoost,"{'est__learning_rate': 0.1, 'est__max_depth': 6, 'est__n_estimators': 100, 'est__subsample': 0.9}",0.5450738150738151,0.4919786096256685
+MLP,"{'est__alpha': 1e-05, 'est__hidden_layer_sizes': (50, 50), 'est__learning_rate_init': 0.0001}",0.5501864801864802,0.6371275783040489

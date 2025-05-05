@@ -7,7 +7,7 @@ from sklearn.linear_model import LogisticRegression
 
 
 # Load extracted features
-ffoxi = pd.read_csv('C:/Users/dhruv/Desktop/Thesis work/Datasets/trajectory-feats/fox-point-feats-extracted.csv')
+ffoxi = pd.read_csv('datasets/fox-point-feats-extracted.csv')
 
 # Display the first few rows to inspect the data
 print(ffoxi.head())
