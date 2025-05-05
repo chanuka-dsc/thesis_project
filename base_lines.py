@@ -13,7 +13,9 @@ from utilities import evaluate_with_cv_seeds_and_feature_logging
 
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
+df = pd.read_csv(
+    "datasets/ais_point_feats_extracted_datasets_top_4_classes_dataset.csv"
+)
 
 # Separate features and label
 X = df.drop(columns=["tid", "label"], errors="ignore")
@@ -22,18 +24,17 @@ y = LabelEncoder().fit_transform(df["label"])
 
 models = {
     "Logistic Regression": LogisticRegression(
-        solver="liblinear", random_state=42, max_iter=1000
+        solver="liblinear", random_state=42, max_iter=10000
     ),
-    "Decision Tree": DecisionTreeClassifier(random_state=42),
-    # "Random Forest": RandomForestClassifier(random_state=42),
-    # "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss"),
-    # "MLP": MLPClassifier(
-    #     hidden_layer_sizes=(10, 5),
-    #     activation="relu",
-    #     solver="adam",
-    #     max_iter=15000,
-    #     random_state=42,
-    # ),
+    "Random Forest": RandomForestClassifier(n_jobs=-1, random_state=42),
+    "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss", n_jobs=-1),
+    "MLP": MLPClassifier(
+        hidden_layer_sizes=(10, 5),
+        activation="relu",
+        solver="adam",
+        max_iter=15000,
+        random_state=42,
+    ),
 }
 
 for name, model in models.items():

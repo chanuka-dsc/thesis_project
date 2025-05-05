@@ -10,6 +10,7 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import f1_score
+from sklearn.impute import SimpleImputer
 
 
 def evaluate_with_cv_seeds_and_feature_logging(
@@ -22,8 +23,11 @@ def evaluate_with_cv_seeds_and_feature_logging(
     n_splits: int = 5,
 ) -> pd.DataFrame:
 
-    feature_names = list(X.columns)
-    X_array = X.values
+    # === Impute missing values before splitting ===
+    imputer = SimpleImputer(strategy="mean")
+    X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+    feature_names = list(X_imputed.columns)
+    X_array = X_imputed.values
 
     records = []
     for seed in seeds:
@@ -38,10 +42,9 @@ def evaluate_with_cv_seeds_and_feature_logging(
                 direction=desc,
                 scoring="f1_weighted",
                 n_jobs=-1,
-                cv=5,
+                cv=2,  # Minimum for valid CV
                 n_features_to_select="auto",
             )
-
             selector.fit(X_train, y_train)
             mask = selector.get_support()
 
@@ -80,7 +83,7 @@ def evaluate_with_cv_seeds_and_feature_logging(
 
     results_df = pd.DataFrame(records)
 
-    # print summary
+    # === print summary ===
     for metric in ["f1_macro", "f1_micro", "f1_weighted"]:
         m_mean = results_df[metric].mean()
         m_std = results_df[metric].std()
