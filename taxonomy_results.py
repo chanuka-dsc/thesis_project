@@ -68,7 +68,7 @@ for name, model in models.items():
         # Save detailed results per combination
         model_safe = name.lower().replace(" ", "_")
         combo_safe = desc.replace(" ", "_")
-        csv_name = f"results/taxonomy/{model_safe}_combo_{combo_safe}.csv"
+        csv_name = f"results/csv/taxonomy/{model_safe}_combo_{combo_safe}.csv"
         result_combo.to_csv(csv_name, index=False)
         print(f"Saved: {csv_name}")
 
@@ -82,6 +82,16 @@ for name, model in models.items():
     summary_df = pd.DataFrame(all_results).sort_values(
         by="mean_f1_weighted", ascending=False
     )
-    summary_path = f"results/taxonomy/{model_safe}_combination_summary.csv"
+    summary_path = f"results/csv/taxonomy/{model_safe}_combination_summary.csv"
     summary_df.to_csv(summary_path, index=False)
     print(f"Saved summary for {name}: {summary_path}")
+
+    # Print the best-performing combination
+    best_row = summary_df.iloc[0]
+    best_df = pd.DataFrame([best_row])
+    print(
+        f"Best for {name}: {best_row['combination']} "
+        f"with mean F1 (weighted): {best_row['mean_f1_weighted']:.4f}"
+    )
+
+
