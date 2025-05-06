@@ -14,7 +14,7 @@ from utilities import evaluate_with_cv_seeds_and_feature_logging
 
 # === Load and Prepare Dataset ===
 df = pd.read_csv(
-    "datasets/ais_point_feats_extracted_datasets_top_4_classes_dataset.csv"
+    "datasets/fox-point-feats-extracted.csv"
 )
 
 # Separate features and label
