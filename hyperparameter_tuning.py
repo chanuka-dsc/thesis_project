@@ -1,120 +1,115 @@
-#!/usr/bin/env python3
-import os
-import warnings
-
 import pandas as pd
-import numpy as np
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import (
-    train_test_split, GridSearchCV, StratifiedKFold
-)
-from sklearn.metrics import f1_score
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+import ast
+import os
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
-
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.metrics import make_scorer, f1_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.neural_network import MLPClassifier
 
-# Suppress convergence & XGBoost warnings
-warnings.filterwarnings("ignore", category=ConvergenceWarning)
-warnings.filterwarnings("ignore", message=".*use_label_encoder.*")
-
-
-# 1) Load & encode the Fox dataset
+# Load your full dataset
 df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
-X  = df.drop(columns=["tid", "label"], errors="ignore")
-y  = LabelEncoder().fit_transform(df["label"])
+X = df.drop(columns=["tid", "label"], errors="ignore")
+y = LabelEncoder().fit_transform(df["label"])
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=42
-)
 
-# 2) Define base estimators (all will be wrapped in a Pipeline for scaling)
 models = {
-    "LogisticRegression": LogisticRegression(max_iter=10000, random_state=42),
-    "RandomForest"      : RandomForestClassifier(n_jobs=-1, random_state=42),
-    "XGBoost"           : XGBClassifier(            # no more use_label_encoder
-                              eval_metric="logloss",
-                              n_jobs=-1,
-                              random_state=42
-                          ),
-    "MLP"               : MLPClassifier(
-                              max_iter=10000,
-                              tol=1e-4,
-                              early_stopping=True,
-                              validation_fraction=0.1,
-                              n_iter_no_change=10,
-                              random_state=42
-                          ),
-}
-
-
-# 3) Compact, explicit parameter grids (3–5 choices each)
-param_grids = {
-    "LogisticRegression": {
-        "est__C"      : [0.01, 0.1, 1.0, 10.0],
-        "est__penalty": ["l1", "l2"],
-        "est__solver" : ["liblinear", "saga"]
+    "Logistic Regression": {
+        "model": LogisticRegression(max_iter=10000, random_state=42),
+        "param_grid": {
+            "clf__C": [0.1, 1.0, 10.0],
+            "clf__penalty": ["l1", "l2"],
+            "clf__solver": ["liblinear", "saga"],
+        },
+        "selection_file": "results/csv/base/fox/logistic_regression_selection_f1_scores.csv",
     },
-    "RandomForest": {
-        "est__n_estimators": [100, 300, 500, 1000],
-        "est__max_depth"   : [None, 10, 20, 30],
-        "est__max_features": ["sqrt", "log2", 8, 16]   # powers of two
+    "Random Forest": {
+        "model": RandomForestClassifier(n_jobs=-1, random_state=42),
+        "param_grid": {
+            "clf__n_estimators": [100, 500, 1000],
+            "clf__max_depth": [None, 10, 20],
+            "clf__max_features": ["sqrt", "log2", 16],
+        },
+        "selection_file": "results/csv/base/fox/random_forest_selection_f1_scores.csv",
     },
     "XGBoost": {
-        "est__n_estimators"  : [100, 300, 500, 1000],
-        "est__max_depth"     : [3, 6, 10, 15],
-        "est__learning_rate" : [0.01, 0.05, 0.1, 0.2],
-        "est__subsample"     : [0.5, 0.7, 0.9, 1.0]
+        "model": XGBClassifier(eval_metric="mlogloss", n_jobs=-1, random_state=42),
+        "param_grid": {
+            "clf__n_estimators": [100, 500, 1000],
+            "clf__max_depth": [3, 6, 10],
+            "clf__learning_rate": [0.01, 0.1],
+            "clf__subsample": [0.8, 1.0],
+        },
+        "selection_file": "results/csv/base/fox/xgboost_selection_f1_scores.csv",
     },
     "MLP": {
-        "est__hidden_layer_sizes": [(50,), (100,), (50,50), (100,50)],
-        "est__alpha"             : [1e-5, 1e-4, 1e-3, 1e-2],
-        "est__learning_rate_init": [1e-4, 5e-4, 1e-3, 5e-3]
-    }
+        "model": MLPClassifier(max_iter=15000, random_state=42),
+        "param_grid": {
+            "clf__hidden_layer_sizes": [(50,), (100,), (50, 50)],
+            "clf__alpha": [1e-4, 1e-3, 1e-2],
+            "clf__learning_rate_init": [1e-4, 1e-3, 1e-2],
+        },
+        "selection_file": "results/csv/base/fox/mlp_selection_f1_scores.csv",
+    },
 }
 
-# 4) Shared 5-fold Stratified CV
-cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-os.makedirs("results", exist_ok=True)
-records = []
+results = []
+for model_name, config in models.items():
+    print(f"\nProcessing model: {model_name}")
+    selection_df = pd.read_csv(config["selection_file"])
+    feature_sets = selection_df[["description", "seed", "features"]].drop_duplicates()
 
-for name, estimator in models.items():
-    print(f"\n▶ Tuning {name} via GridSearchCV (5-fold)…")
-    pipe = Pipeline([
-        ("scaler", StandardScaler()),
-        ("est",    estimator)
-    ])
+    for _, row in feature_sets.iterrows():
+        features = ast.literal_eval(row["features"])
+        valid_features = [f for f in features if f in X.columns]
+        if not valid_features:
+            continue
 
-    grid = GridSearchCV(
-        estimator=pipe,
-        param_grid=param_grids[name],
-        scoring="f1_weighted",
-        cv=cv,
-        n_jobs=-1,
-        verbose=1,
-        error_score=np.nan
-    )
-    grid.fit(X_train, y_train)
+        X_selected = X[valid_features]
 
-    best = grid.best_estimator_
-    y_pred = best.predict(X_test)
-    test_f1 = f1_score(y_test, y_pred, average="weighted")
+        pipeline = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("clf", config["model"]),
+            ]
+        )
 
-    print(f" ✔ {name} — CV f1_weighted: {grid.best_score_:.4f}, "
-          f"test f1_weighted: {test_f1:.4f}")
+        grid_search = GridSearchCV(
+            pipeline,
+            config["param_grid"],
+            scoring=make_scorer(f1_score, average="weighted"),
+            cv=5,
+            n_jobs=-1,
+        )
 
-    records.append({
-        "model"          : name,
-        "best_params"    : grid.best_params_,
-        "cv_best_score" : grid.best_score_,
-        "test_f1_score" : test_f1
-    })
+        grid_search.fit(X_selected, y)
 
-# 5) Save all results
-out_df = pd.DataFrame(records)
-out_df.to_csv("results/hyperparam_grid_5fold.csv", index=False)
-print("\n✅ All results written to results/hyperparam_grid_5fold.csv")
+        results.append(
+            {
+                "selection_model": model_name,
+                "eval_model": model_name,
+                "description": row["description"],
+                "seed": row["seed"],
+                "n_features": len(valid_features),
+                "best_score": grid_search.best_score_,
+                "best_params": grid_search.best_params_,
+            }
+        )
+
+
+# Save results separately for each eval_model
+results_df = pd.DataFrame(results)
+
+output_dir = "results/csv/base/fox"
+os.makedirs(output_dir, exist_ok=True)
+
+for model_name in results_df["eval_model"].unique():
+    model_df = results_df[results_df["eval_model"] == model_name]
+    file_name = f"tuning_{model_name.lower().replace(' ', '_')}.csv"
+    file_path = os.path.join(output_dir, file_name)
+    model_df.to_csv(file_path, index=False)
+    print(f"✅ Saved: {file_path}")
