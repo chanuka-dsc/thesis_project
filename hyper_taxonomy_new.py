@@ -1,118 +1,123 @@
 import pandas as pd
-import ast
-import os
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import make_scorer, f1_score
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.linear_model import LogisticRegression
+from xgboost import XGBClassifier
+from sklearn.preprocessing import LabelEncoder
+from utilities import evaluate_with_cv_seeds_taxonomy_fixed_features_hyper
+import os
+from itertools import combinations
 
-# Load dataset
+# === Load and Prepare Dataset ===
 df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
 X = df.drop(columns=["tid", "label"], errors="ignore")
 y = LabelEncoder().fit_transform(df["label"])
 
-# Define models with paths to their evaluated result CSVs
+# === Define Models with Hyperparameter Grids ===
 models = {
     "Logistic Regression": {
-        "model": LogisticRegression(max_iter=10000, random_state=42),
+        "model": LogisticRegression(solver="liblinear", random_state=42, max_iter=10000),
         "param_grid": {
-            "clf__C": [0.1, 1.0, 10.0],
-            "clf__penalty": ["l1", "l2"],
-            "clf__solver": ["liblinear", "saga"],
+            "C": [0.1, 1.0, 10.0],
+            "penalty": ["l1", "l2"],
+            "solver": ["liblinear", "saga"],
         },
-        "combination_file": "results/csv/taxonomy/fox/partial/logistic_regression_combo_distance_geometry+angles.csv",
     },
     "Random Forest": {
-        "model": RandomForestClassifier(n_jobs=-1, random_state=42),
+        "model": RandomForestClassifier(random_state=42),
         "param_grid": {
-            "clf__n_estimators": [100, 500, 1000],
-            "clf__max_depth": [None, 10, 20],
-            "clf__max_features": ["sqrt", "log2", 16],
+            "n_estimators": [100, 500, 1000],
+            "max_depth": [None, 10, 20],
+            "max_features": ["sqrt", "log2", 16],
         },
-        "combination_file": "results/csv/taxonomy/fox/partial/random_forest_combo_acceleration.csv",
     },
     "XGBoost": {
-        "model": XGBClassifier(eval_metric="mlogloss", n_jobs=-1, random_state=42),
+        "model": XGBClassifier(random_state=42, eval_metric="mlogloss"),
         "param_grid": {
-            "clf__n_estimators": [100, 500, 1000],
-            "clf__max_depth": [3, 6, 10],
-            "clf__learning_rate": [0.01, 0.1],
-            "clf__subsample": [0.8, 1.0],
+            "n_estimators": [100, 500, 1000],
+            "max_depth": [3, 6, 10],
+            "learning_rate": [0.01, 0.1],
+            "subsample": [0.8, 1.0],
         },
-        "combination_file": "results/csv/taxonomy/fox/partial/xgboost_combo_distance_geometry+speed.csv",
     },
     "MLP": {
-        "model": MLPClassifier(max_iter=15000, random_state=42),
+        "model": MLPClassifier(
+            hidden_layer_sizes=(10, 5),
+            activation="relu",
+            solver="adam",
+            max_iter=15000,
+            random_state=42,
+        ),
         "param_grid": {
-            "clf__hidden_layer_sizes": [(50,), (100,), (50, 50)],
-            "clf__alpha": [1e-4, 1e-3, 1e-2],
-            "clf__learning_rate_init": [1e-4, 1e-3, 1e-2],
+            "hidden_layer_sizes": [(50,), (100,), (50, 50)],
+            "alpha": [1e-4, 1e-3, 1e-2],
+            "learning_rate_init": [1e-4, 1e-3, 1e-2],
         },
-        "combination_file": "results/csv/taxonomy/fox/partial/mlp_combo_distance_geometry+angles.csv",
     },
 }
 
-# Run tuning
-results = []
+# === Load Taxonomy ===
+taxonomy_df = pd.read_csv("results/taxonomy_simple.csv")
+mid_levels = taxonomy_df["mid_level"].unique().tolist()
 
-for model_name, config in models.items():
-    print(f"\n📌 Processing model: {model_name}")
+# === Get all non-empty combinations of mid-levels ===
+combination_list = []
+for r in range(1, len(mid_levels) + 1):
+    combination_list.extend(combinations(mid_levels, r))
 
-    df_combo = pd.read_csv(config["combination_file"])
+# === Evaluate All Combinations for All Models ===
+os.makedirs("results/combination_csv", exist_ok=True)
 
-    for _, row in df_combo.iterrows():
-        try:
-            features = ast.literal_eval(row["features"])
-        except (ValueError, SyntaxError):
-            print(f"⚠️ Skipping malformed feature list at row {row}")
-            continue
+for name, config in models.items():
+    all_results = []
+    for combo in combination_list:
+        selected_features = taxonomy_df.loc[
+            taxonomy_df["mid_level"].isin(combo), "feature_name"
+        ].tolist()
 
-        selected_features = [f for f in features if f in X.columns]
         if not selected_features:
             continue
 
-        X_selected = X[selected_features]
+        X_subset = X[selected_features]
+        desc = "+".join(combo)
 
-        pipeline = Pipeline(
-            [
-                ("scaler", StandardScaler()),
-                ("clf", config["model"]),
-            ]
+        # Evaluate model with hyperparameter tuning
+        result_combo = evaluate_with_cv_seeds_taxonomy_fixed_features_hyper(
+            model=config["model"],
+            model_name=name,
+            desc=f"combo_{desc}",
+            X=X_subset,
+            y=y,
+            param_grid=config["param_grid"],
+            cv_inner=3,
+            scoring="f1_weighted",
         )
 
-        grid_search = GridSearchCV(
-            pipeline,
-            config["param_grid"],
-            scoring=make_scorer(f1_score, average="weighted"),
-            cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42),
-            n_jobs=-1,
+        # Save detailed results per combination
+        model_safe = name.lower().replace(" ", "_")
+        combo_safe = desc.replace(" ", "_")
+        csv_name = f"results/csv/taxonomy/fox/partial/tuned/{model_safe}_combo_tuned_{combo_safe}.csv"
+        result_combo.to_csv(csv_name, index=False)
+        print(f"Saved: {csv_name}")
+
+        # Store summary for this combo
+        f1_mean = result_combo["f1_weighted"].mean()
+        all_results.append(
+            {"model": name, "combination": desc, "mean_f1_weighted": f1_mean}
         )
 
-        grid_search.fit(X_selected, y)
+    # Save summary for this model
+    summary_df = pd.DataFrame(all_results).sort_values(
+        by="mean_f1_weighted", ascending=False
+    )
+    summary_path = f"results/csv/taxonomy/fox/{model_safe}_combination_tuned_summary.csv"
+    summary_df.to_csv(summary_path, index=False)
+    print(f"Saved summary for {name}: {summary_path}")
 
-        results.append(
-            {
-                "model": model_name,
-                "seed": row.get("seed"),
-                "fold": row.get("fold"),
-                "description": row.get("description"),
-                "n_features": len(selected_features),
-                "best_score": grid_search.best_score_,
-                "best_params": grid_search.best_params_,
-            }
-        )
-
-# Save results
-results_df = pd.DataFrame(results)
-output_dir = "results/csv/taxonomy/fox/partial/tuned"
-os.makedirs(output_dir, exist_ok=True)
-
-for model_name in results_df["model"].unique():
-    model_df = results_df[results_df["model"] == model_name]
-    file_name = f"tuning_per_fold_{model_name.lower().replace(' ', '_')}.csv"
-    model_df.to_csv(os.path.join(output_dir, file_name), index=False)
-    print(f"✅ Saved: {file_name}")
+    # Print the best-performing combination
+    best_row = summary_df.iloc[0]
+    best_df = pd.DataFrame([best_row])
+    print(
+        f"Best for {name}: {best_row['combination']} "
+        f"with mean F1 (weighted): {best_row['mean_f1_weighted']:.4f}"
+    )
