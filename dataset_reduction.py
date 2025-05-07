@@ -1,16 +1,20 @@
 import pandas as pd
 
-df = pd.read_csv("datasets/hurricanes-point-feats-extracted.csv")
+df = pd.read_csv("datasets/ais-point-feats-extracted.csv")
 
-top_labels = df["label"].value_counts().nlargest(4).index
+# Get the counts of each class
+class_counts = df["label"].value_counts()
 
-filtered_df = df[df["label"].isin(top_labels)]
+# Display the class counts
+print(class_counts)
 
-print(filtered_df["label"].value_counts())
-
-filtered_df.to_csv(
-    "datasets/hurricanes_point_feats_extracted_top_4_classes_dataset.csv",
-    index=False,
-)
+# Define the target classes
+target_classes = [30.0, 52.0, 60.0, 70.0]
 
 
+# Filter for only the target classes
+filtered_df = df[df["label"].isin(target_classes)]
+
+# Save the filtered data to a new CSV file
+filtered_file_path = "datasets/ais_filtered_classes.csv"
+filtered_df.to_csv(filtered_file_path, index=False)
