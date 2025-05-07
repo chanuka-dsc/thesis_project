@@ -18,7 +18,7 @@ y = LabelEncoder().fit_transform(df["label"])
 # === Define Models ===
 models = {
     "Logistic Regression": LogisticRegression(
-        solver="liblinear", random_state=42, max_iter=1000
+        solver="liblinear", random_state=42, max_iter=10000
     ),
     "Random Forest": RandomForestClassifier(random_state=42),
     "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss"),
