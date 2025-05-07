@@ -1,70 +1,74 @@
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Load CSVs
-file1 = pd.read_csv("results/csv/base/fox/random_forest_selection_f1_scores.csv")
-file2 = pd.read_csv("results/csv/base/fox/tuning_random_forest.csv")
-file3 = pd.read_csv(
-    "results/csv/taxonomy/fox/partial/random_forest_combo_acceleration.csv"
+# File paths
+# file_paths_logistic = [
+#     "results/csv/base/fox/logistic_regression_selection_f1_scores.csv",
+#     "results/csv/base/fox/logistic_regression_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/fox/partial/logistic_regression_combo_distance_geometry+angles.csv",
+#     "results/csv/taxonomy/fox/partial/tuned/logistic_regression_combo_tuned_distance_geometry+angles.csv",
+# ]
+
+# file_paths_random = [
+#     "results/csv/base/fox/random_forest_selection_f1_scores.csv",
+#     "results/csv/base/fox/random_forest_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/fox/partial/random_forest_combo_acceleration.csv",
+#     "results/csv/taxonomy/fox/partial/tuned/random_forest_combo_tuned_acceleration.csv",
+# ]
+
+
+# file_paths = [
+#     "results/csv/base/fox/xgboost_selection_f1_scores.csv",
+#     "results/csv/base/fox/xgboost_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/fox/partial/xgboost_combo_distance_geometry+speed.csv",
+#     "results/csv/taxonomy/fox/partial/tuned/xgboost_combo_tuned_acceleration.csv",
+# ]
+
+file_paths = [
+    "results/csv/base/fox/mlp_selection_f1_scores.csv",
+    "results/csv/base/fox/mlp_tuned_selection_f1_scores.csv",
+    "results/csv/taxonomy/fox/partial/mlp_combo_distance_geometry+angles.csv",
+    "results/csv/taxonomy/fox/partial/tuned/mlp_combo_tuned_angles.csv",
+]
+
+# Labels for the different sources
+labels = [
+    "Base - Non-tuned (Backward)",
+    "Base - Non-tuned (Forward)",
+    "Base - Tuned (Backward)",
+    "Base - Tuned (Forward)",
+    "Taxonomy - Non-tuned",
+    "Taxonomy - Tuned",
+]
+
+# Prepare an empty dataframe to consolidate all the results
+all_results = pd.DataFrame()
+
+# Load and process each file
+for i, path in enumerate(file_paths):
+    df = pd.read_csv(path)
+    if i < 2:
+        # Separate backward and forward for the first two files
+        backward = df[df["description"].str.contains("backward")].copy()
+        backward["Source"] = labels[i * 2]
+        forward = df[df["description"].str.contains("forward")].copy()
+        forward["Source"] = labels[i * 2 + 1]
+        all_results = pd.concat([all_results, backward, forward], ignore_index=True)
+    else:
+        # Use the single label for taxonomy data
+        df["Source"] = labels[i + 2]
+        all_results = pd.concat([all_results, df], ignore_index=True)
+
+# Create the boxplot
+plt.figure(figsize=(15, 8))
+sns.boxplot(data=all_results, x="Source", y="f1_weighted")
+plt.xticks(rotation=10, fontsize=10)
+plt.title(
+    "F1 Weighted Scores for MLP - Tuned and Non-Tuned Models",
+    fontsize=14,
 )
-file4 = pd.read_csv(
-    "results/csv/taxonomy/fox/partial/tuned/tuning_per_fold_random_forest.csv"
-)
-
-# --- Filter Backward and Forward ---
-
-# Non-tuned base
-backward_f1 = file1[file1["description"].str.contains("backward", case=False)]
-forward_f1 = file1[file1["description"].str.contains("forward", case=False)]
-
-# Tuned base
-backward_tuned = file2[file2["description"].str.contains("backward", case=False)]
-forward_tuned = file2[file2["description"].str.contains("forward", case=False)]
-
-# Taxonomy
-taxonomy_f1 = file3.copy()
-taxonomy_tuned = file4.copy()
-
-# --- Set up plotting ---
-sns.set(style="whitegrid")
-fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-fig.suptitle(
-    "Comparison of Weighted F1 and Best Scores Across Selection Methods Random Forest", fontsize=16
-)
-
-# Plot 1: Backward (Non-Tuned)
-sns.boxplot(data=backward_f1, y="f1_weighted", ax=axes[0, 0])
-axes[0, 0].set_title("Backward (Non-Tuned)")
-axes[0, 0].set_ylabel("Weighted F1")
-
-# Plot 2: Forward (Non-Tuned)
-sns.boxplot(data=forward_f1, y="f1_weighted", ax=axes[0, 1])
-axes[0, 1].set_title("Forward (Non-Tuned)")
-axes[0, 1].set_ylabel("Weighted F1")
-
-# Plot 3: Taxonomy (Non-Tuned)
-sns.boxplot(data=taxonomy_f1, y="f1_weighted", ax=axes[0, 2])
-axes[0, 2].set_title("Taxonomy (Non-Tuned)")
-axes[0, 2].set_ylabel("Weighted F1")
-
-# Plot 4: Backward (Tuned)
-sns.boxplot(data=backward_tuned, y="best_score", ax=axes[1, 0])
-axes[1, 0].set_title("Backward (Tuned)")
-axes[1, 0].set_ylabel("Best Score")
-
-# Plot 5: Forward (Tuned)
-sns.boxplot(data=forward_tuned, y="best_score", ax=axes[1, 1])
-axes[1, 1].set_title("Forward (Tuned)")
-axes[1, 1].set_ylabel("Best Score")
-
-# Plot 6: Taxonomy (Tuned)
-sns.boxplot(data=taxonomy_tuned, y="best_score", ax=axes[1, 2])
-axes[1, 2].set_title("Taxonomy (Tuned)")
-axes[1, 2].set_ylabel("Best Score")
-
-# Layout adjustment
-plt.tight_layout(rect=[0, 0, 1, 0.95])
-
-plt.savefig("random_forest_boxplots.png", dpi=300)
+plt.ylabel("F1 Weighted Score", fontsize=10)
+plt.xlabel("Feature selection Variant", fontsize=10)
+plt.savefig("results/figures/MLP.png")
 plt.show()
