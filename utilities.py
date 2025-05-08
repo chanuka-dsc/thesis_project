@@ -197,11 +197,11 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features(
     seeds: List[int] = [14159, 26535, 89793, 23846],
     n_splits: int = 5,
 ) -> pd.DataFrame:
-    """
-    Cross-validation evaluation with pre-fixed features (no feature selection inside).
-    """
-    feature_names = list(X.columns)
-    X_array = X.values
+
+    imputer = SimpleImputer(strategy="mean")
+    X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+    feature_names = list(X_imputed.columns)
+    X_array = X_imputed.values
 
     records = []
     for seed in seeds:
@@ -210,23 +210,18 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features(
             X_train, X_val = X_array[train_idx], X_array[val_idx]
             y_train, y_val = y[train_idx], y[val_idx]
 
-            # === No feature selection ===
-            selected = feature_names
-            X_train_sel = X_train
-            X_val_sel = X_val
-
-            # === per-fold scaling ===
+            # === Per-fold scaling ===
             scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train_sel)
-            X_val_scaled = scaler.transform(X_val_sel)
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_val_scaled = scaler.transform(X_val)
 
-            # === train & predict ===
+            # === Train & predict ===
             model.fit(X_train_scaled, y_train)
             y_pred = model.predict(X_val_scaled)
             if y_pred.dtype.kind in {"f", "c"}:
                 y_pred = np.round(y_pred).astype(int)
 
-            # === compute F1 metrics ===
+            # === Compute F1 metrics ===
             f1_macro = f1_score(y_val, y_pred, average="macro", zero_division=0)
             f1_micro = f1_score(y_val, y_pred, average="micro", zero_division=0)
             f1_weighted = f1_score(y_val, y_pred, average="weighted", zero_division=0)
@@ -237,7 +232,7 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features(
                     "model": model_name,
                     "description": desc,
                     "fold": fold_idx,
-                    "features": selected,
+                    "features": feature_names,
                     "f1_macro": f1_macro,
                     "f1_micro": f1_micro,
                     "f1_weighted": f1_weighted,
@@ -246,7 +241,7 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features(
 
     results_df = pd.DataFrame(records)
 
-    # print summary
+    # Print summary
     for metric in ["f1_macro", "f1_micro", "f1_weighted"]:
         m_mean = results_df[metric].mean()
         m_std = results_df[metric].std()
@@ -271,8 +266,10 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features_hyper(
     scoring: str = "f1_weighted",
 ) -> pd.DataFrame:
 
-    feature_names = list(X.columns)
-    X_array = X.values
+    imputer = SimpleImputer(strategy="mean")
+    X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+    feature_names = list(X_imputed.columns)
+    X_array = X_imputed.values
 
     records = []
     for seed in seeds:
@@ -281,17 +278,12 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features_hyper(
             X_train, X_val = X_array[train_idx], X_array[val_idx]
             y_train, y_val = y[train_idx], y[val_idx]
 
-            # === No feature selection ===
-            selected = feature_names
-            X_train_sel = X_train
-            X_val_sel = X_val
-
-            # === per-fold scaling ===
+            # === Per-fold scaling ===
             scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train_sel)
-            X_val_scaled = scaler.transform(X_val_sel)
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_val_scaled = scaler.transform(X_val)
 
-            # === Hyperparameter tuning  ===
+            # === Hyperparameter tuning ===
             if param_grid is not None:
                 search = GridSearchCV(
                     model, param_grid, cv=cv_inner, scoring=scoring, n_jobs=-1
@@ -307,7 +299,7 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features_hyper(
             if y_pred.dtype.kind in {"f", "c"}:
                 y_pred = np.round(y_pred).astype(int)
 
-            # === compute F1 metrics ===
+            # === Compute F1 metrics ===
             f1_macro = f1_score(y_val, y_pred, average="macro", zero_division=0)
             f1_micro = f1_score(y_val, y_pred, average="micro", zero_division=0)
             f1_weighted = f1_score(y_val, y_pred, average="weighted", zero_division=0)
@@ -318,7 +310,7 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features_hyper(
                     "model": model_name,
                     "description": desc,
                     "fold": fold_idx,
-                    "features": selected,
+                    "features": feature_names,
                     "f1_macro": f1_macro,
                     "f1_micro": f1_micro,
                     "f1_weighted": f1_weighted,
@@ -327,7 +319,7 @@ def evaluate_with_cv_seeds_taxonomy_fixed_features_hyper(
 
     results_df = pd.DataFrame(records)
 
-    # print summary
+    # Print summary
     for metric in ["f1_macro", "f1_micro", "f1_weighted"]:
         m_mean = results_df[metric].mean()
         m_std = results_df[metric].std()

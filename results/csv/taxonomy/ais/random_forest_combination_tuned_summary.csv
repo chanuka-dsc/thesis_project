@@ -1,0 +1,16 @@
+model,combination,mean_f1_weighted
+Random Forest,distance_geometry+angles+speed+acceleration,0.7552023043900561
+Random Forest,distance_geometry+speed+acceleration,0.749934963619072
+Random Forest,distance_geometry+angles+speed,0.7432502294034578
+Random Forest,angles+speed+acceleration,0.7420606067238277
+Random Forest,distance_geometry+speed,0.7307346170078667
+Random Forest,speed+acceleration,0.726548779823619
+Random Forest,distance_geometry+angles+acceleration,0.7261734415731204
+Random Forest,angles+speed,0.7229690207667623
+Random Forest,angles+acceleration,0.7116112077998898
+Random Forest,distance_geometry+acceleration,0.7059994009626673
+Random Forest,speed,0.6869332410452405
+Random Forest,acceleration,0.6734213750108182
+Random Forest,distance_geometry+angles,0.6659271665659401
+Random Forest,angles,0.6272131103861328
+Random Forest,distance_geometry,0.5980566237163946
