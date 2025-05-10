@@ -9,7 +9,7 @@ import os
 from itertools import combinations
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
+df = pd.read_csv("datasets/ais_filtered_classes.csv")
 X = df.drop(columns=["tid", "label"], errors="ignore")
 y = LabelEncoder().fit_transform(df["label"])
 
@@ -65,9 +65,6 @@ combination_list = []
 for r in range(1, len(mid_levels) + 1):
     combination_list.extend(combinations(mid_levels, r))
 
-# === Evaluate All Combinations for All Models ===
-os.makedirs("results/combination_csv", exist_ok=True)
-
 for name, config in models.items():
     all_results = []
     for combo in combination_list:
@@ -96,7 +93,7 @@ for name, config in models.items():
         # Save detailed results per combination
         model_safe = name.lower().replace(" ", "_")
         combo_safe = desc.replace(" ", "_")
-        csv_name = f"results/csv/taxonomy/fox/partial/tuned/{model_safe}_combo_tuned_{combo_safe}.csv"
+        csv_name = f"results/csv/taxonomy/ais/partial/tuned/{model_safe}_combo_tuned_{combo_safe}.csv"
         result_combo.to_csv(csv_name, index=False)
         print(f"Saved: {csv_name}")
 
@@ -110,7 +107,7 @@ for name, config in models.items():
     summary_df = pd.DataFrame(all_results).sort_values(
         by="mean_f1_weighted", ascending=False
     )
-    summary_path = f"results/csv/taxonomy/fox/{model_safe}_combination_tuned_summary.csv"
+    summary_path = f"results/csv/taxonomy/ais/{model_safe}_combination_tuned_summary.csv"
     summary_df.to_csv(summary_path, index=False)
     print(f"Saved summary for {name}: {summary_path}")
 

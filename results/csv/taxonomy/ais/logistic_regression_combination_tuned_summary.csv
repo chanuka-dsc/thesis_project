@@ -1,0 +1,16 @@
+model,combination,mean_f1_weighted
+Logistic Regression,distance_geometry+angles+speed,0.6879918492353664
+Logistic Regression,distance_geometry+angles+speed+acceleration,0.6879288214360919
+Logistic Regression,angles+speed+acceleration,0.6763930043209054
+Logistic Regression,distance_geometry+speed+acceleration,0.6529364510466602
+Logistic Regression,distance_geometry+speed,0.6492847247537701
+Logistic Regression,speed+acceleration,0.6490908607875866
+Logistic Regression,distance_geometry+angles+acceleration,0.6490648681936647
+Logistic Regression,angles+speed,0.637222582828061
+Logistic Regression,angles+acceleration,0.6220466718441068
+Logistic Regression,speed,0.6126155114961424
+Logistic Regression,distance_geometry+angles,0.6022788775314176
+Logistic Regression,distance_geometry+acceleration,0.568181739382035
+Logistic Regression,angles,0.5277345120187502
+Logistic Regression,acceleration,0.5193232007425832
+Logistic Regression,distance_geometry,0.3925939946941284

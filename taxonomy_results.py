@@ -11,7 +11,7 @@ import os
 from itertools import combinations
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
+df = pd.read_csv("datasets/ais_filtered_classes.csv")
 X = df.drop(columns=["tid", "label"], errors="ignore")
 y = LabelEncoder().fit_transform(df["label"])
 
@@ -40,8 +40,6 @@ combination_list = []
 for r in range(1, len(mid_levels) + 1):
     combination_list.extend(combinations(mid_levels, r))
 
-# === Evaluate All Combinations for All Models ===
-os.makedirs("results/combination_csv", exist_ok=True)
 
 for name, model in models.items():
     all_results = []
@@ -68,7 +66,7 @@ for name, model in models.items():
         # Save detailed results per combination
         model_safe = name.lower().replace(" ", "_")
         combo_safe = desc.replace(" ", "_")
-        csv_name = f"results/csv/taxonomy/{model_safe}_combo_{combo_safe}.csv"
+        csv_name = f"results/csv/taxonomy/ais/partial/{model_safe}_combo_{combo_safe}.csv"
         result_combo.to_csv(csv_name, index=False)
         print(f"Saved: {csv_name}")
 
@@ -82,7 +80,7 @@ for name, model in models.items():
     summary_df = pd.DataFrame(all_results).sort_values(
         by="mean_f1_weighted", ascending=False
     )
-    summary_path = f"results/csv/taxonomy/{model_safe}_combination_summary.csv"
+    summary_path = f"results/csv/taxonomy/ais/{model_safe}_combination_summary.csv"
     summary_df.to_csv(summary_path, index=False)
     print(f"Saved summary for {name}: {summary_path}")
 
@@ -93,5 +91,3 @@ for name, model in models.items():
         f"Best for {name}: {best_row['combination']} "
         f"with mean F1 (weighted): {best_row['mean_f1_weighted']:.4f}"
     )
-
-
