@@ -8,18 +8,18 @@ from xgboost import XGBClassifier
 from utilities import evaluate_with_cv_seeds_and_feature_logging_with_hyper
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
+df = pd.read_csv("Datasets/ais_filtered_classes.csv")
 
 X = df.drop(columns=["tid", "label"], errors="ignore")
 y = LabelEncoder().fit_transform(df["label"])
 
 # === Define models ===
 models = {
-    "Logistic Regression": LogisticRegression(
-        solver="liblinear", random_state=42, max_iter=10000
-    ),
-    "Random Forest": RandomForestClassifier(n_jobs=-1, random_state=42),
-    "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss", n_jobs=-1),
+    # "Logistic Regression": LogisticRegression(
+    #     solver="liblinear", random_state=42, max_iter=10000
+    # ),
+    # # "Random Forest": RandomForestClassifier(n_jobs=-1, random_state=42),
+    # "XGBoost": XGBClassifier(random_state=42, eval_metric="mlogloss", n_jobs=-1),
     "MLP": MLPClassifier(
         hidden_layer_sizes=(10, 5),
         activation="relu",
@@ -78,7 +78,7 @@ for name, model in models.items():
 
     df_all = pd.concat([result_forward, result_backward], ignore_index=True)
     csv_path = (
-        f"results/csv/{name.lower().replace(' ', '_')}_tuned_selection_f1_scores.csv"
+        f"results/csv/base/ais/{name.lower().replace(' ', '_')}_tuned_selection_f1_scores.csv"
     )
     df_all.to_csv(csv_path, index=False)
     print(f"Saved tuned selection CSV for {name}: {csv_path}")
