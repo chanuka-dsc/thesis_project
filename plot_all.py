@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # File paths
-# file_paths_logistic = [
+# file_paths_logistic_fox = [
 #     "results/csv/base/fox/logistic_regression_selection_f1_scores.csv",
 #     "results/csv/base/fox/logistic_regression_tuned_selection_f1_scores.csv",
 #     "results/csv/taxonomy/fox/partial/logistic_regression_combo_distance_geometry+angles.csv",
 #     "results/csv/taxonomy/fox/partial/tuned/logistic_regression_combo_tuned_distance_geometry+angles.csv",
 # ]
 
-# file_paths_random = [
+# file_paths_random_fox = [
 #     "results/csv/base/fox/random_forest_selection_f1_scores.csv",
 #     "results/csv/base/fox/random_forest_tuned_selection_f1_scores.csv",
 #     "results/csv/taxonomy/fox/partial/random_forest_combo_acceleration.csv",
@@ -18,18 +18,46 @@ import seaborn as sns
 # ]
 
 
-# file_paths = [
+# file_paths_xg_fox = [
 #     "results/csv/base/fox/xgboost_selection_f1_scores.csv",
 #     "results/csv/base/fox/xgboost_tuned_selection_f1_scores.csv",
 #     "results/csv/taxonomy/fox/partial/xgboost_combo_distance_geometry+speed.csv",
 #     "results/csv/taxonomy/fox/partial/tuned/xgboost_combo_tuned_acceleration.csv",
 # ]
 
+# file_paths_fox = [
+#     "results/csv/base/fox/mlp_selection_f1_scores.csv",
+#     "results/csv/base/fox/mlp_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/fox/partial/mlp_combo_distance_geometry+angles.csv",
+#     "results/csv/taxonomy/fox/partial/tuned/mlp_combo_tuned_angles.csv",
+# ]
+
+# file_paths_logistic_ais = [
+#     "results/csv/base/ais/logistic_regression_selection_f1_scores.csv",
+#     "results/csv/base/ais/logistic_regression_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/ais/partial/logistic_regression_combo_angles+speed+acceleration.csv",
+#     "results/csv/taxonomy/ais/partial/tuned/logistic_regression_combo_tuned_distance_geometry+angles+speed.csv",
+# ]
+
+# file_paths_mlp_ais   = [
+#     "results/csv/base/ais/mlp_selection_f1_scores.csv",
+#     "results/csv/base/ais/mlp_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/ais/partial/mlp_combo_speed+acceleration.csv",
+#     "results/csv/taxonomy/ais/partial/tuned/mlp_combo_tuned_angles+speed+acceleration.csv",
+# ]
+
+# file_paths_random_ais = [
+#     "results/csv/base/ais/random_forest_selection_f1_scores.csv",
+#     "results/csv/base/ais/random_forest_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/ais/partial/random_forest_combo_distance_geometry+speed+acceleration.csv",
+#     "results/csv/taxonomy/ais/partial/tuned/random_forest_combo_tuned_distance_geometry+angles+speed.csv",
+# ]
+
 file_paths = [
-    "results/csv/base/fox/mlp_selection_f1_scores.csv",
-    "results/csv/base/fox/mlp_tuned_selection_f1_scores.csv",
-    "results/csv/taxonomy/fox/partial/mlp_combo_distance_geometry+angles.csv",
-    "results/csv/taxonomy/fox/partial/tuned/mlp_combo_tuned_angles.csv",
+    "results/csv/base/ais/xgboost_selection_f1_scores.csv",
+    "results/csv/base/ais/xgboost_tuned_selection_f1_scores.csv",
+    "results/csv/taxonomy/ais/partial/xgboost_combo_distance_geometry+angles+speed+acceleration.csv",
+    "results/csv/taxonomy/ais/partial/tuned/xgboost_combo_tuned_distance_geometry+angles+speed+acceleration.csv",
 ]
 
 # Labels for the different sources
@@ -65,10 +93,10 @@ plt.figure(figsize=(15, 8))
 sns.boxplot(data=all_results, x="Source", y="f1_weighted")
 plt.xticks(rotation=10, fontsize=10)
 plt.title(
-    "F1 Weighted Scores for MLP - Tuned and Non-Tuned Models",
+    "F1 Weighted Scores for Random Forest - Tuned and Non-Tuned Models",
     fontsize=14,
 )
 plt.ylabel("F1 Weighted Score", fontsize=10)
 plt.xlabel("Feature selection Variant", fontsize=10)
-plt.savefig("results/figures/MLP.png")
+plt.savefig("results/figures/ais/random.png")
 plt.show()
