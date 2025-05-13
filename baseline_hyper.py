@@ -8,7 +8,7 @@ from xgboost import XGBClassifier
 from utilities import evaluate_with_cv_seeds_and_feature_logging_with_hyper
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("datasets/ais_filtered_classes.csv")
+df = pd.read_csv("datasets/hurricane_balanced_top5_classes.csv")
 
 X = df.drop(columns=["tid", "label"], errors="ignore")
 y = LabelEncoder().fit_transform(df["label"])
@@ -77,6 +77,6 @@ for name, model in models.items():
     )
 
     df_all = pd.concat([result_forward, result_backward], ignore_index=True)
-    csv_path = f"results/csv/base/ais/{name.lower().replace(' ', '_')}_tuned_selection_f1_scores.csv"
+    csv_path = f"results/csv/base/hurricane/{name.lower().replace(' ', '_')}_tuned_selection_f1_scores.csv"
     df_all.to_csv(csv_path, index=False)
     print(f"Saved tuned selection CSV for {name}: {csv_path}")
