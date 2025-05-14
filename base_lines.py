@@ -7,6 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from xgboost import XGBClassifier
 from utilities import evaluate_with_cv_seeds_and_feature_logging
+import os
 
 
 # === Load and Prepare Dataset ===
@@ -55,5 +56,8 @@ for name, model in models.items():
 
     df_all = pd.concat([result_forward, results_backward], ignore_index=True)
     csv_path = f"results/csv/base/hurricane/{name.lower().replace(' ', '_')}_selection_f1_scores.csv"
+    
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+    
     df_all.to_csv(csv_path, index=False)
     print(f"Saved combined CSV for {name}: {csv_path}")
