@@ -1,0 +1,16 @@
+model,combination,mean_f1_weighted
+XGBoost,distance_geometry+angles+speed+acceleration,0.48339851003736867
+XGBoost,distance_geometry+speed+acceleration,0.4822978885978212
+XGBoost,angles+speed+acceleration,0.47567582604599057
+XGBoost,speed+acceleration,0.47232484161593036
+XGBoost,distance_geometry+angles+acceleration,0.45919478093558164
+XGBoost,distance_geometry+angles+speed,0.44290664259155077
+XGBoost,distance_geometry+acceleration,0.44116775075562725
+XGBoost,angles+acceleration,0.4321240008285024
+XGBoost,angles+speed,0.41774929226783647
+XGBoost,acceleration,0.4068844295344042
+XGBoost,distance_geometry+speed,0.4064018443835341
+XGBoost,distance_geometry+angles,0.3761019026829952
+XGBoost,speed,0.37356457569100787
+XGBoost,angles,0.33943650116910784
+XGBoost,distance_geometry,0.27661212718738865
