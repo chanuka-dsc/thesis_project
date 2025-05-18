@@ -9,28 +9,28 @@ import os
 from itertools import combinations
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("datasets/ais_filtered_classes.csv")
+df = pd.read_csv("datasets/hurricane_balanced_top5_classes.csv")
 X = df.drop(columns=["tid", "label"], errors="ignore")
 y = LabelEncoder().fit_transform(df["label"])
 
 # === Define Models with Hyperparameter Grids ===
 models = {
-    "Logistic Regression": {
-        "model": LogisticRegression(solver="liblinear", random_state=42, max_iter=10000),
-        "param_grid": {
-            "C": [0.1, 1.0, 10.0],
-            "penalty": ["l1", "l2"],
-            "solver": ["liblinear", "saga"],
-        },
-    },
-    "Random Forest": {
-        "model": RandomForestClassifier(random_state=42),
-        "param_grid": {
-            "n_estimators": [100, 500, 1000],
-            "max_depth": [None, 10, 20],
-            "max_features": ["sqrt", "log2", 16],
-        },
-    },
+    # "Logistic Regression": {
+    #     "model": LogisticRegression(solver="liblinear", random_state=42, max_iter=10000),
+    #     "param_grid": {
+    #         "C": [0.1, 1.0, 10.0],
+    #         "penalty": ["l1", "l2"],
+    #         "solver": ["liblinear", "saga"],
+    #     },
+    # },
+    # "Random Forest": {
+    #     "model": RandomForestClassifier(random_state=42),
+    #     "param_grid": {
+    #         "n_estimators": [100, 500, 1000],
+    #         "max_depth": [None, 10, 20],
+    #         "max_features": ["sqrt", "log2", 16],
+    #     },
+    # },
     "XGBoost": {
         "model": XGBClassifier(random_state=42, eval_metric="mlogloss"),
         "param_grid": {
@@ -93,7 +93,7 @@ for name, config in models.items():
         # Save detailed results per combination
         model_safe = name.lower().replace(" ", "_")
         combo_safe = desc.replace(" ", "_")
-        csv_name = f"results/csv/taxonomy/ais/partial/tuned/{model_safe}_combo_tuned_{combo_safe}.csv"
+        csv_name = f"results/csv/taxonomy/hurricane/partial/tuned/{model_safe}_combo_tuned_{combo_safe}.csv"
         result_combo.to_csv(csv_name, index=False)
         print(f"Saved: {csv_name}")
 
@@ -107,7 +107,7 @@ for name, config in models.items():
     summary_df = pd.DataFrame(all_results).sort_values(
         by="mean_f1_weighted", ascending=False
     )
-    summary_path = f"results/csv/taxonomy/ais/{model_safe}_combination_tuned_summary.csv"
+    summary_path = f"results/csv/taxonomy/hurricane/{model_safe}_combination_tuned_summary.csv"
     summary_df.to_csv(summary_path, index=False)
     print(f"Saved summary for {name}: {summary_path}")
 
