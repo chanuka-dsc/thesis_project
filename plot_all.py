@@ -53,11 +53,39 @@ import seaborn as sns
 #     "results/csv/taxonomy/ais/partial/tuned/random_forest_combo_tuned_distance_geometry+angles+speed.csv",
 # ]
 
+# file_paths_xg_ais = [
+#     "results/csv/base/ais/xgboost_selection_f1_scores.csv",
+#     "results/csv/base/ais/xgboost_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/ais/partial/xgboost_combo_distance_geometry+angles+speed+acceleration.csv",
+#     "results/csv/taxonomy/ais/partial/tuned/xgboost_combo_tuned_distance_geometry+angles+speed+acceleration.csv",
+# ]
+
+# file_paths_logistic_hurricane = [
+#     "results/csv/base/hurricane/logistic_regression_selection_f1_scores.csv",
+#     "results/csv/base/hurricane/logistic_regression_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/hurricane/partial/logistic_regression_combo_distance_geometry+angles+speed+acceleration.csv",
+#     "results/csv/taxonomy/hurricane/partial/tuned/logistic_regression_combo_tuned_distance_geometry+angles+speed+acceleration.csv",
+# ]
+
+# file_paths_mlp_hurricane = [
+#     "results/csv/base/hurricane/mlp_selection_f1_scores.csv",
+#     "results/csv/base/hurricane/mlp_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/hurricane/partial/mlp_combo_angles+speed+acceleration.csv",
+#     "results/csv/taxonomy/hurricane/partial/tuned/mlp_combo_tuned_speed+acceleration.csv",
+# ]
+
+# file_paths_random_hurricane = [
+#     "results/csv/base/hurricane/random_forest_selection_f1_scores.csv",
+#     "results/csv/base/hurricane/random_forest_tuned_selection_f1_scores.csv",
+#     "results/csv/taxonomy/hurricane/partial/random_forest_combo_distance_geometry+angles+speed+acceleration.csv",
+#     "results/csv/taxonomy/hurricane/partial/tuned/random_forest_combo_tuned_distance_geometry+angles+speed+acceleration.csv",
+# ]
+
 file_paths = [
-    "results/csv/base/ais/xgboost_selection_f1_scores.csv",
-    "results/csv/base/ais/xgboost_tuned_selection_f1_scores.csv",
-    "results/csv/taxonomy/ais/partial/xgboost_combo_distance_geometry+angles+speed+acceleration.csv",
-    "results/csv/taxonomy/ais/partial/tuned/xgboost_combo_tuned_distance_geometry+angles+speed+acceleration.csv",
+    "results/csv/base/hurricane/xgboost_selection_f1_scores.csv",
+    "results/csv/base/hurricane/xgboost_tuned_selection_f1_scores.csv",
+    "results/csv/taxonomy/hurricane/partial/tuned/xgboost_combo_tuned_distance_geometry+angles+speed.csv",
+    "results/csv/taxonomy/hurricane/partial/tuned/xgboost_combo_tuned_distance_geometry+angles+speed+acceleration.csv",
 ]
 
 # Labels for the different sources
@@ -93,10 +121,10 @@ plt.figure(figsize=(15, 8))
 sns.boxplot(data=all_results, x="Source", y="f1_weighted")
 plt.xticks(rotation=10, fontsize=10)
 plt.title(
-    "F1 Weighted Scores for Random Forest - Tuned and Non-Tuned Models",
+    "F1 Weighted Scores for XGBoost - Tuned and Non-Tuned Models",
     fontsize=14,
 )
 plt.ylabel("F1 Weighted Score", fontsize=10)
 plt.xlabel("Feature selection Variant", fontsize=10)
-plt.savefig("results/figures/ais/random.png")
+plt.savefig("results/figures/hurricane/xgboost.png")
 plt.show()
