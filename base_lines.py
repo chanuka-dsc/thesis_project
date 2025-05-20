@@ -11,7 +11,7 @@ import os
 
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("datasets/hurricane_balanced_top5_classes.csv")
+df = pd.read_csv("datasets/trajectories_last20years.csv")
 
 # Separate features and label
 X = df.drop(columns=["tid", "label"], errors="ignore")
@@ -55,7 +55,7 @@ for name, model in models.items():
     )
 
     df_all = pd.concat([result_forward, results_backward], ignore_index=True)
-    csv_path = f"results/csv/base/hurricane/{name.lower().replace(' ', '_')}_selection_f1_scores.csv"
+    csv_path = f"results/csv/base/hurricane/new/{name.lower().replace(' ', '_')}_selection_f1_scores.csv"
     
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     

@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.utils import resample
 
-df = pd.read_csv("datasets/fox-point-feats-extracted.csv")
+df = pd.read_csv("trajectories_last20years.csv")
 
 # Get the counts of each class
 class_counts = df["label"].value_counts()
