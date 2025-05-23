@@ -6,12 +6,12 @@ import os
 
 #  labels
 common_labels = [
-    "Base - Non-tuned (Backward)",
-    "Base - Non-tuned (Forward)",
-    "Base - Tuned (Backward)",
-    "Base - Tuned (Forward)",
-    "Taxonomy - Non-tuned",
-    "Taxonomy - Tuned",
+    "Base - Non\n-tuned(Backward)",
+    "Base - Non\n-tuned(Forward)",
+    "Base - Tuned\n(Backward)",
+    "Base - Tuned\n(Forward)",
+    "Taxonomy -\nNon-tuned",
+    "Taxonomy -\nTuned",
 ]
 
 # Dictionary with only dataset/model specific info
@@ -199,10 +199,10 @@ for name, config in result_sets.items():
         dodge=False,
         legend=False,
     )
-    plt.xticks(rotation=10, fontsize=10)
-    plt.title(config["plot_title"], fontsize=14)
-    plt.ylabel("F1 Weighted Score", fontsize=10)
-    plt.xlabel("Feature selection Variant", fontsize=10)
+    plt.xticks(rotation=0, fontsize=18)
+    plt.title(config["plot_title"], fontsize=20)
+    plt.ylabel("F1 Weighted Score", fontsize=18)
+    plt.xlabel("")
     plt.ylim(config["YMIN"], config["YMAX"])
     plt.tight_layout()
     output_dir = os.path.dirname(config["output_path"])

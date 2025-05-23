@@ -11,7 +11,7 @@ import os
 from itertools import combinations
 
 # === Load and Prepare Dataset ===
-df = pd.read_csv("datasets/hurricane_balanced_top5_classes.csv")
+df = pd.read_csv("datasets/trajectories_last20years.csv")
 X = df.drop(columns=["tid", "label"], errors="ignore")
 y = LabelEncoder().fit_transform(df["label"])
 
@@ -66,7 +66,7 @@ for name, model in models.items():
         # Save detailed results per combination
         model_safe = name.lower().replace(" ", "_")
         combo_safe = desc.replace(" ", "_")
-        csv_name = f"results/csv/taxonomy/hurricane/partial/{model_safe}_combo_{combo_safe}.csv"
+        csv_name = f"results/csv/taxonomy/hurricane_new/partial/{model_safe}_combo_{combo_safe}.csv"
         result_combo.to_csv(csv_name, index=False)
         print(f"Saved: {csv_name}")
 
@@ -81,7 +81,7 @@ for name, model in models.items():
         by="mean_f1_weighted", ascending=False
     )
     summary_path = (
-        f"results/csv/taxonomy/hurricane/{model_safe}_combination_summary.csv"
+        f"results/csv/taxonomy/hurricane_new/{model_safe}_combination_summary.csv"
     )
     summary_df.to_csv(summary_path, index=False)
     print(f"Saved summary for {name}: {summary_path}")

@@ -1,0 +1,16 @@
+model,combination,mean_f1_weighted
+MLP,speed+acceleration,0.4487465265143504
+MLP,distance_geometry+angles+speed+acceleration,0.43089523131881247
+MLP,distance_geometry+angles+acceleration,0.4296988431881533
+MLP,angles+speed+acceleration,0.4282938088929045
+MLP,angles+acceleration,0.42181475987817907
+MLP,distance_geometry+speed+acceleration,0.4214304599953437
+MLP,distance_geometry+angles+speed,0.41549489145211693
+MLP,angles+speed,0.40353058633359273
+MLP,distance_geometry+acceleration,0.40010101027517314
+MLP,angles,0.3998993453988362
+MLP,distance_geometry+angles,0.3992231227035604
+MLP,acceleration,0.3742135895720978
+MLP,distance_geometry+speed,0.3552824670962928
+MLP,speed,0.3351313689114169
+MLP,distance_geometry,0.28123758276849325
